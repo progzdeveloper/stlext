@@ -1,0 +1,150 @@
+// Copyright (c) 2016, Michael Polukarov (Russia).
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// - Redistributions of source code must retain the above copyright
+//   notice, this list of conditions and the following disclaimer.
+//
+// - Redistributions in binary form must reproduce the above copyright
+//   notice, this list of conditions and the following disclaimer listed
+//   in this license in the documentation and/or other materials
+//   provided with the distribution.
+//
+// - Neither the name of the copyright holders nor the names of its
+//   contributors may be used to endorse or promote products derived from
+//   this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#pragma once
+#include "../platform/common.h"
+
+// C++11
+#include "cxx11/all_of.hpp"
+#include "cxx11/any_of.hpp"
+#include "cxx11/copy_if.hpp"
+#include "cxx11/copy_n.hpp"
+#include "cxx11/find_if_not.hpp"
+#include "cxx11/iota.hpp"
+#include "cxx11/is_partitioned.hpp"
+#include "cxx11/is_permutation.hpp"
+#include "cxx11/is_sorted.hpp"
+#include "cxx11/none_of.hpp"
+#include "cxx11/one_of.hpp"
+#include "cxx11/partition_copy.hpp"
+#include "cxx11/partition_point.hpp"
+#include "cxx11/sample.hpp"
+// C++14
+#include "cxx14/equal.hpp"
+#include "cxx14/mismatch.hpp"
+// C++17
+#include "cxx17/for_each.hpp"
+
+// compability
+
+#if defined(STDX_CMPLR_MSVC)
+namespace std
+{
+#if STDX_CMPLR_MSVC <= 1700
+	using stdx::all_of;
+	using stdx::all_of_equal;
+
+	using stdx::any_of;
+	using stdx::any_of_equal;
+
+	using stdx::none_of;
+	using stdx::none_of_equal;
+
+	using stdx::one_of;
+	using stdx::one_of_equal;
+
+	using stdx::copy_if;
+	using stdx::copy_while;
+	using stdx::copy_until;
+	using stdx::copy_n;
+
+	using stdx::itoa;
+	using stdx::itoa_n;
+
+	using stdx::find_if_not;
+
+	using stdx::mismatch;
+	using stdx::equal;
+
+	using stdx::is_partitioned;
+	using stdx::partition_copy;
+	using stdx::partition_point;
+
+	using stdx::is_sorted;
+	using stdx::is_sorted_until;
+#endif
+	using stdx::is_increasing;
+	using stdx::is_strictly_increasing;
+
+	using stdx::is_decreasing;
+	using stdx::is_strictly_decreasing;
+
+	using stdx::for_each_n;
+
+	using stdx::sample;
+}
+#endif
+
+#if defined(STDX_CMPLR_GCC) && STDX_CMPLR_GCC < 400
+// expose to std namespace
+namespace std
+{
+	using stdx::all_of;
+	using stdx::all_of_equal;
+
+	using stdx::any_of;
+	using stdx::any_of_equal;
+
+	using stdx::none_of;
+	using stdx::none_of_equal;
+
+	using stdx::one_of;
+	using stdx::one_of_equal;
+
+	using stdx::copy_if;
+	using stdx::copy_while;
+	using stdx::copy_until;
+	using stdx::copy_n;
+
+	using stdx::find_if_not;
+
+	using stdx::itoa;
+	using stdx::itoa_n;
+
+	using stdx::is_partitioned;
+	using stdx::partition_copy;
+	using stdx::partition_point;
+
+
+	using stdx::is_sorted;
+	using stdx::is_sorted_until;
+
+	using stdx::is_increasing;
+	using stdx::is_strictly_increasing;
+
+	using stdx::is_decreasing;
+	using stdx::is_strictly_decreasing;
+
+	using stdx::for_each_n;
+}
+#endif 
+
+
+

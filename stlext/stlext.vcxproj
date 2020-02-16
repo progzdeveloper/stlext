@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C7A97791-D793-49D3-B1C0-869DB47E9F14}</ProjectGuid>
+    <RootNamespace>stlext</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)build\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>$(SolutionDir)build\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IntDir>$(SolutionDir)build\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(SolutionDir)build\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="algorithm\algorithm.h" />
+    <ClInclude Include="algorithm\experimental.h" />
+    <ClInclude Include="algorithm\ext\gather.hpp" />
+    <ClInclude Include="algorithm\ext\is_unique.hpp" />
+    <ClInclude Include="algorithm\ext\join.hpp" />
+    <ClInclude Include="algorithm\ext\kadane.hpp" />
+    <ClInclude Include="algorithm\ext\majority_element.hpp" />
+    <ClInclude Include="algorithm\ext\regex_split.hpp" />
+    <ClInclude Include="algorithm\ext\slide.hpp" />
+    <ClInclude Include="algorithm\ext\split.hpp" />
+    <ClInclude Include="algorithm\searching.h" />
+    <ClInclude Include="algorithm\searching\exponential_search.hpp" />
+    <ClInclude Include="algorithm\searching\interpolation_search.hpp" />
+    <ClInclude Include="algorithm\sorting.h" />
+    <ClInclude Include="algorithm\sorting\bucket_sort.hpp" />
+    <ClInclude Include="algorithm\sorting\counting_sort.hpp" />
+    <ClInclude Include="algorithm\sorting\insertion_sort.hpp" />
+    <ClInclude Include="algorithm\sorting\selection_sort.hpp" />
+    <ClInclude Include="allocators\aligned_allocator.hpp" />
+    <ClInclude Include="allocators\allocators.hpp" />
+    <ClInclude Include="allocators\arena_traits.hpp" />
+    <ClInclude Include="allocators\basic_allocator.hpp" />
+    <ClInclude Include="allocators\basic_arena.hpp" />
+    <ClInclude Include="allocators\binexp_arena.hpp" />
+    <ClInclude Include="allocators\bitmap_arena.hpp" />
+    <ClInclude Include="allocators\fallback_arena.hpp" />
+    <ClInclude Include="allocators\freelist.hpp" />
+    <ClInclude Include="allocators\heap_arena.hpp" />
+    <ClInclude Include="allocators\intrusive_ptr.hpp" />
+    <ClInclude Include="allocators\memory_storage.hpp" />
+    <ClInclude Include="allocators\ordered_arena.hpp" />
+    <ClInclude Include="allocators\pooled_object.hpp" />
+    <ClInclude Include="bfc\basic_bloom_filter.h" />
+    <ClInclude Include="bfc\bloom_filter.h" />
+    <ClInclude Include="bfc\bfcfwd.h" />
+    <ClInclude Include="bfc\compressed_bloom_filter.h" />
+    <ClInclude Include="bfc\counting_bloom_filter.h" />
+    <ClInclude Include="bfc\scalable_bloom_filter.h" />
+    <ClInclude Include="bitvector\bitvector.hpp" />
+    <ClInclude Include="bitvector\bit_iterator.hpp" />
+    <ClInclude Include="bitvector\bit_storage.hpp" />
+    <ClInclude Include="compability\algorithm" />
+    <ClInclude Include="compability\cxx11\all_of.hpp" />
+    <ClInclude Include="compability\cxx11\any_of.hpp" />
+    <ClInclude Include="compability\cxx11\copy_if.hpp" />
+    <ClInclude Include="compability\cxx11\copy_n.hpp" />
+    <ClInclude Include="compability\cxx11\find_if_not.hpp" />
+    <ClInclude Include="compability\cxx11\iota.hpp" />
+    <ClInclude Include="compability\cxx11\is_partitioned.hpp" />
+    <ClInclude Include="compability\cxx11\is_permutation.hpp" />
+    <ClInclude Include="compability\cxx11\is_sorted.hpp" />
+    <ClInclude Include="compability\cxx11\none_of.hpp" />
+    <ClInclude Include="compability\cxx11\one_of.hpp" />
+    <ClInclude Include="compability\cxx11\partition_copy.hpp" />
+    <ClInclude Include="compability\cxx11\partition_point.hpp" />
+    <ClInclude Include="compability\cxx11\sample.hpp" />
+    <ClInclude Include="compability\cxx14\equal.hpp" />
+    <ClInclude Include="compability\cxx14\integer_sequence.hpp" />
+    <ClInclude Include="compability\cxx14\mismatch.hpp" />
+    <ClInclude Include="compability\cxx17\basic_string_view.hpp" />
+    <ClInclude Include="compability\cxx17\for_each.hpp" />
+    <ClInclude Include="compability\cxx17\invoke.hpp" />
+    <ClInclude Include="compability\cxx17\utility.hpp" />
+    <ClInclude Include="compability\cxx20\identity.hpp" />
+    <ClInclude Include="compability\cxx20\span.hpp" />
+    <ClInclude Include="compability\functional" />
+    <ClInclude Include="compability\string_view" />
+    <ClInclude Include="compability\tuple" />
+    <ClInclude Include="compact\storages.hpp" />
+    <ClInclude Include="compact\string.hpp" />
+    <ClInclude Include="compact\vector.hpp" />
+    <ClInclude Include="components\binary_scanner.hpp" />
+    <ClInclude Include="components\class_factory.hpp" />
+    <ClInclude Include="components\invoker.hpp" />
+    <ClInclude Include="components\crtp.hpp" />
+    <ClInclude Include="components\interpret_traits.hpp" />
+    <ClInclude Include="components\reflect.hpp" />
+    <ClInclude Include="components\stream_scanner.hpp" />
+    <ClInclude Include="containers\circular_queue.hpp" />
+    <ClInclude Include="containers\packed_lru_cache.hpp" />
+    <ClInclude Include="containers\lru_cache.hpp" />
+    <ClInclude Include="containers\priority_map.hpp" />
+    <ClInclude Include="containers\span.hpp" />
+    <ClInclude Include="containers\packed_hashtbl.hpp" />
+    <ClInclude Include="containers\stringset.hpp" />
+    <ClInclude Include="cui\noecho.hpp" />
+    <ClInclude Include="cui\progress_viewer.hpp" />
+    <ClInclude Include="cui\progress_watcher.hpp" />
+    <ClInclude Include="cui\prompt.hpp" />
+    <ClInclude Include="functional\benchmark.hpp" />
+    <ClInclude Include="functional\bit_andnot.hpp" />
+    <ClInclude Include="functional\function_traits.hpp" />
+    <ClInclude Include="functional\identity.hpp" />
+    <ClInclude Include="functional\invoker.hpp" />
+    <ClInclude Include="functional\memorized.hpp" />
+    <ClInclude Include="functional\overload.hpp" />
+    <ClInclude Include="functional\predicates.hpp" />
+    <ClInclude Include="iostreams\base16.hpp" />
+    <ClInclude Include="iostreams\base64.hpp" />
+    <ClInclude Include="iostreams\bin.hpp" />
+    <ClInclude Include="iostreams\byte_view.hpp" />
+    <ClInclude Include="iostreams\codecs.hpp" />
+    <ClInclude Include="iostreams\format.hpp" />
+    <ClInclude Include="iostreams\getline.hpp" />
+    <ClInclude Include="iostreams\ostream_joiner.hpp" />
+    <ClInclude Include="iostreams\ratio.hpp" />
+    <ClInclude Include="iostreams\timestamp.hpp" />
+    <ClInclude Include="iostreams\utility.hpp" />
+    <ClInclude Include="iterator\any_iterator.hpp" />
+    <ClInclude Include="iterator\circular_iterator.hpp" />
+    <ClInclude Include="iterator\istring_iterator.hpp" />
+    <ClInclude Include="iterator\numeric_iterator.hpp" />
+    <ClInclude Include="iterator\uinserter.hpp" />
+    <ClInclude Include="mathext\constants.hpp" />
+    <ClInclude Include="mathext\fuzzy_compare.hpp" />
+    <ClInclude Include="mathext\mathext.hpp" />
+    <ClInclude Include="mathext\static_log2.hpp" />
+    <ClInclude Include="mathext\static_popcnt.hpp" />
+    <ClInclude Include="numeric\cartesian_product.hpp" />
+    <ClInclude Include="numeric\collector.hpp" />
+    <ClInclude Include="numeric\features.hpp" />
+    <ClInclude Include="numeric\identity_element.hpp" />
+    <ClInclude Include="numeric\metrics.hpp" />
+    <ClInclude Include="numeric\numeric" />
+    <ClInclude Include="numeric\power.hpp" />
+    <ClInclude Include="options\command_line.hpp" />
+    <ClInclude Include="options\config_file.hpp" />
+    <ClInclude Include="options\enviroment_map.hpp" />
+    <ClInclude Include="options\option_source.hpp" />
+    <ClInclude Include="platform\arch.h" />
+    <ClInclude Include="platform\bits.h" />
+    <ClInclude Include="platform\common.h" />
+    <ClInclude Include="platform\compiler.h" />
+    <ClInclude Include="platform\error.h" />
+    <ClInclude Include="platform\platform.h" />
+    <ClInclude Include="platform\version.h" />
+    <ClInclude Include="range\iter_range.hpp" />
+    <ClInclude Include="range\range_algo.hpp" />
+    <ClInclude Include="range\value_range.h" />
+    <ClInclude Include="stltraits\stdxfwd.hpp" />
+    <ClInclude Include="stltraits\stlfwd.hpp" />
+    <ClInclude Include="stltraits\stltraits.hpp" />
+    <ClInclude Include="threads\latch.hpp" />
+    <ClInclude Include="threads\thread_set.hpp" />
+    <ClInclude Include="tuple\tupleio.hpp" />
+    <ClInclude Include="tuple\tuple_algo.hpp" />
+    <ClInclude Include="tuple\tuple_apply.hpp" />
+    <ClInclude Include="tuple\tuple_foreach.hpp" />
+    <ClInclude Include="tuple\tuple_transform.hpp" />
+    <ClInclude Include="tuple\tuple_utils.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="compability\integer_sequence" />
+    <None Include="compability\utility" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

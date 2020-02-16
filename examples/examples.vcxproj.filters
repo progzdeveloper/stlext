@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\algorithm">
+      <UniqueIdentifier>{e5eb31c2-005b-400a-88de-3d8355efa37e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\allocators">
+      <UniqueIdentifier>{d5da02de-914c-4cf3-ae69-12bc4e93708d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\bfc">
+      <UniqueIdentifier>{56acbc64-4c57-492f-bb9f-dd4cc1851671}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\bitvector">
+      <UniqueIdentifier>{a3afc70e-b1dd-4349-a944-c4c1727912d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\components">
+      <UniqueIdentifier>{c50f10ed-cd69-4137-8676-2bc62fab45af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\containers">
+      <UniqueIdentifier>{e7cef74b-9020-49e4-95f2-67bc824aceeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\dso">
+      <UniqueIdentifier>{c4f05c36-20b8-4f4d-bc90-4fec7c2b403a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\experimental">
+      <UniqueIdentifier>{b4c246d4-1681-464a-bb25-feca1b8357c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extensions">
+      <UniqueIdentifier>{3df43e73-b16e-4379-829f-53cc6953269c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\funcutils">
+      <UniqueIdentifier>{fec2fada-4186-43bf-9e3d-64153119b87b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\iterator">
+      <UniqueIdentifier>{faeac59c-1b97-4b93-ae0d-91716a5028ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mathext">
+      <UniqueIdentifier>{238a461a-4d4d-4877-828a-614f2bb040c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\options">
+      <UniqueIdentifier>{6571eddd-2c21-4583-96f9-4caa569cf2cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\range">
+      <UniqueIdentifier>{c1fdcbd6-ff72-4a46-b266-00ea4611c01d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\serialization">
+      <UniqueIdentifier>{055f111d-9215-4fbc-8e49-8f9c187fa902}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\strutils">
+      <UniqueIdentifier>{45a37e66-3046-4b5b-a5f9-c323b160e601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\tuple">
+      <UniqueIdentifier>{de932383-d719-4a9a-98fb-c7447fc98c82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\iostreams">
+      <UniqueIdentifier>{1f9608a0-ce80-49d7-9171-8bf088087d0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\cui">
+      <UniqueIdentifier>{1cc78a37-5fdf-4fec-9a84-405a517d5acf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="algorithm\majelem_sample.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="cui\cui_samples.h">
+      <Filter>Header Files\cui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="point2d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="record.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iostreams\codecs.h">
+      <Filter>Header Files\iostreams</Filter>
+    </ClInclude>
+    <ClInclude Include="iostreams\getline.h">
+      <Filter>Header Files\iostreams</Filter>
+    </ClInclude>
+    <ClInclude Include="iostreams\byteview.h">
+      <Filter>Header Files\iostreams</Filter>
+    </ClInclude>
+    <ClInclude Include="iostreams\iomanips.h">
+      <Filter>Header Files\iostreams</Filter>
+    </ClInclude>
+    <ClInclude Include="iostreams\utilities.h">
+      <Filter>Header Files\iostreams</Filter>
+    </ClInclude>
+    <ClInclude Include="rt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
