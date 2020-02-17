@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -Wall -Wextra")
 set(CMAKE_LFLAGS "${CMAKE_LFLAGS} -fsanitize=address")
-include_directories(../ ../catch ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(../ ${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(${PROJECT_NAME}
   bm_bitvector.cpp
   bm_counting_sort.cpp
