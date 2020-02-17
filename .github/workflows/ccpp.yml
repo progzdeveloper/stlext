@@ -11,9 +11,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: configure
       run: mkdir build 
-    - name: build/examples
-      run: cd build && cmake ../examples && make
     - name: build/tests
       run: cd build && cmake ../tests && make
-    - name: test
+    - name: testing
       run: cd ../bin && ./stlext-tests
