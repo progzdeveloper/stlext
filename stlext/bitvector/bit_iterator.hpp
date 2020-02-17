@@ -1420,7 +1420,7 @@ inline void __flip_copy_aligned(bit_iterator<_Word, _IsConst> __first, bit_itera
     word_type* __blk = __first.__m_blk; // input pointer
     word_type* __ptr = __result.__m_blk; // output pointer
 
-    *__ptr = *__blk ^ (word_type(-1) << __first.__m_ctz) & (word_type(-1) >> (bpw - __msb - 1));
+    *__ptr = (*__blk) ^ ((word_type(-1) << __first.__m_ctz) & (word_type(-1) >> (bpw - __msb - 1)));
 
     __n -= __ddn;
     if (__n == 0)
