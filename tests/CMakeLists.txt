@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -Wall -Wextra")
 set(CMAKE_LFLAGS "${CMAKE_LFLAGS} -fsanitize=address")
-include_directories(../ ../catch ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(../ ../catch)
 add_executable(${PROJECT_NAME}
   algorithm/experimental.cpp
   algorithm/sorting.cpp
