@@ -31,9 +31,9 @@ cd examples
 cd ..
 echo "done."
 
-#echo "Creating build directory..."
-#mkdir build
-#cd build
-#cmake ../
-#make
+echo "Creating build directory..."
+mkdir build
+cd build
+cmake ../
+make
 
