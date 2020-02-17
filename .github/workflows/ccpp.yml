@@ -12,4 +12,4 @@ jobs:
     - name: configure
       run: mkdir build 
     - name: build
-      run: cd build && cmake ../tests && make
+      run: cd build && cmake ../examples && make
