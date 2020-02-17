@@ -12,6 +12,4 @@ jobs:
     - name: configure
       run: mkdir build 
     - name: build/tests
-      run: cd build && cmake ../tests && make
-    - name: testing
-      run: cd ../bin && ./stlext-tests
+      run: cd build && cmake ../examples && make
