@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: configure
-      run: mkdir build && cd build 
+      run: mkdir build 
     - name: build
-      run: cmake ../ && make
+      run: cd build && cmake ../ && make
