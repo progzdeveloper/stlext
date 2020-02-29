@@ -119,12 +119,12 @@ public:
         __m_nbits(0) {
     }
 
-    bit_storage(const _Alloc& al) :
+    explicit bit_storage(const _Alloc& al) :
         __m_blocks(al),
         __m_nbits(0) {
     }
 
-    bit_storage(size_t n, bool v) :
+    explicit bit_storage(size_t n, bool v) :
         __m_blocks(traits_type::bit_space(n)),
         __m_nbits(n)
     {
@@ -341,13 +341,13 @@ public:
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
     }
 
-    bit_storage(const _Alloc& al) :
+    explicit bit_storage(const _Alloc& al) :
         base_type(al) {
         // clear buffers
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
     }
 
-    bit_storage(size_t n, bool v)
+    explicit bit_storage(size_t n, bool v)
     {
         // clear buffers
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
@@ -828,13 +828,13 @@ public:
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
     }
 
-    bit_storage(const _Alloc& al) :
+    explicit bit_storage(const _Alloc& al) :
         base_type(al) {
         // set all to zero
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
     }
 
-    bit_storage(size_t n, bool v)
+    explicit bit_storage(size_t n, bool v)
     {
         // set all to zero
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
