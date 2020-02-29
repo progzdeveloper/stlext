@@ -125,8 +125,8 @@ public:
         typedef std::forward_iterator_tag iterator_category;
 
         typedef view_type value_type;
-        typedef view_type& reference;
-        typedef const view_type& const_reference;
+        typedef view_type reference;
+        typedef const view_type const_reference;
         typedef view_type* pointer;
         typedef const view_type* const_pointer;
 
