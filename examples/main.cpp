@@ -24,7 +24,7 @@ void setup_cmdline(stdx::command_line& cmdline)
 int main(int argc, char* argv[])
 {
 	using namespace std;
-	
+
 	sample_map samples;
 	_EXAMPLE(samples, majority_element, "illustrate how to use and customize stdx::majority_element() algorithm");
 	_EXAMPLE(samples, is_majority_element, "illustrate how to use and customize stdx::is_majority_element() algorithm");

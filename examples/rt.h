@@ -35,7 +35,7 @@ inline std::ostream& operator<< (std::ostream& stream, const entry& e)
 
 	for (; first != last; ++first, ++length)
 	{
-		if (isspace(*first) && length > help_width) {
+        if (::isspace(*first) && length > help_width) {
 			length = 0;
 			stream << '\n';
 			stream.write(spacing, title_width + 1);
