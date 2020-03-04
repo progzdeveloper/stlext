@@ -74,9 +74,10 @@ _It interpolation_search(_It first, _It last, const _Key& what, _Proj proj)
 	if (first == last)
 		return last; // nothing to search
 
-	/*__stdx_assert(std::is_sorted(first, last, [&proj](const _Key& x, const _Key& y) { return proj(x) < proj(y); }), 
-				  std::invalid_argument, "[first, last) range must be sorted");*/
-
+#ifdef _STDX_DEBUG
+    __stdx_assertx(std::is_sorted(first, last, [&proj](const _Key& x, const _Key& y) { return proj(x) < proj(y); }),
+                   std::invalid_argument, "[first, last) range must be sorted");
+#endif
 
 	_It lowIt = first;
 	_It highIt = std::prev(last);

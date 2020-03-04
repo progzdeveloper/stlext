@@ -1349,9 +1349,9 @@ transform(bit_iterator<_Word, _IsConst> __first1, bit_iterator<_Word, _IsConst> 
                 //is_same<bit_andnot<_Word>, _BitOp>::value,
                 "type of _BitOp not supported");
 
-    __stdx_assert(__first1.__m_ctz == __first2.__m_ctz &&
-                  __first1.__m_ctz == __result.__m_ctz, std::domain_error,
-                  "unaligned transform currently not supported");
+    __stdx_assertx(__first1.__m_ctz == __first2.__m_ctz &&
+                   __first1.__m_ctz == __result.__m_ctz, std::domain_error,
+                   "unaligned transform currently not supported");
     return __transform_aligned(__first1, __last1, __first2, __result, op);
 }
 

@@ -74,19 +74,19 @@ public:
 	}
 
 	inline basic_bloom_filter& operator&= (const basic_bloom_filter& __other) {
-		__stdx_assert(__other.hash_count() == this->hash_count());
+        __stdx_assert(__other.hash_count() == this->hash_count(), std::logic_error);
 		__m_bits &= __other.__m_bits;
 		return (*this);
 	}
 
 	inline basic_bloom_filter& operator|= (const basic_bloom_filter& __other) {
-		__stdx_assert(__other.hash_count() == this->hash_count());
+        __stdx_assert(__other.hash_count() == this->hash_count(), std::logic_error);
 		__m_bits |= __other.__m_bits;
 		return (*this);
 	}
 
 	inline basic_bloom_filter& operator^= (const basic_bloom_filter& __other) {
-		__stdx_assert(__other.hash_count() == this->hash_count());
+        __stdx_assert(__other.hash_count() == this->hash_count(), std::logic_error);
 		__m_bits ^= __other.__m_bits;
 		return (*this);
 	}

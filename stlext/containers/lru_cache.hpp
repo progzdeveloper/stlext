@@ -465,7 +465,7 @@ public:
     // side-effect: order of elements will change, some elements may or may not be evicted
     const_iterator insert(const_reference val, size_t cost = 1)
     {
-        __stdx_assert(cost > 0, std::invalid_argument, "incorrect cost value");
+        __stdx_assertx(cost > 0, std::invalid_argument, "incorrect cost value");
 
         if (cost > __m_maxcost) {
             clear();
@@ -627,7 +627,7 @@ public:
     // that can be added to the cache before it becomes full.
     // \warning the result is undefined if cost is equal to 0
     inline size_t available(size_t cost) const {
-        __stdx_assert(cost > 0, std::invalid_argument, "incorrect cost value");
+        __stdx_assertx(cost > 0, std::invalid_argument, "incorrect cost value");
         return ((__m_maxcost - __m_cost) / cost);
     }
 
@@ -641,7 +641,7 @@ public:
     // cost in the cache
     // \warning the result is undefined if cost is equal to 0
     inline size_t capacity(size_t cost) const {
-        __stdx_assert(cost > 0, std::invalid_argument, "incorrect cost value");
+        __stdx_assertx(cost > 0, std::invalid_argument, "incorrect cost value");
         return (__m_maxcost / cost);
     }
 

@@ -11,6 +11,8 @@ OBJECTS_DIR = ../build/examples/obj
 
 LIBS += -lpthread
 
+DEFINES += _STDX_DEBUG
+
 QMAKE_CXXFLAGS += -O1 -m64 -msse4.2
 
 HEADERS += \

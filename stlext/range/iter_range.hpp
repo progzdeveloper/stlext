@@ -83,9 +83,9 @@ struct iter_range
 	// extract section from range producing new range
 	inline this_type section(size_t from, size_t to) const
 	{
-		__stdx_assert((distance_type)from < size(), std::invalid_argument, "invalid _From value");
-		__stdx_assert((distance_type)to < size(), std::invalid_argument, "invalid _To value");
-		__stdx_assert(from < to, std::invalid_argument, "invalid range");
+        __stdx_assertx((distance_type)from < size(), std::invalid_argument, "invalid _From value");
+        __stdx_assertx((distance_type)to < size(), std::invalid_argument, "invalid _To value");
+        __stdx_assertx(from < to, std::invalid_argument, "invalid range");
 		return this_type(first + from, first + to);
 	}
 

@@ -129,7 +129,7 @@ public:
 	}
 
 	constexpr const_reference at(size_type pos) const {
-		__stdx_assert(pos < extent, std::out_of_range, "span::at(): pos is out of range");
+        __stdx_assertx(pos < extent, std::out_of_range, "span::at(): pos is out of range");
 		return __m_data[pos];
 	}
 
@@ -139,7 +139,7 @@ public:
 	}
 
 	constexpr span<_Elem, dynamic_extent> subspan(size_type offset = 0, size_type n = npos) const {
-		__stdx_assert(offset < extent, std::out_of_range, "span::sub(): __pos is out of range");
+        __stdx_assertx(offset < extent, std::out_of_range, "span::sub(): __pos is out of range");
         return span<_Elem, dynamic_extent>(__m_data + offset, (std::min)(n, extent - offset));
 	}
 
@@ -242,7 +242,7 @@ public:
 	}
 
 	inline const_reference at(size_type pos) const {
-		__stdx_assert(pos < __m_size, std::out_of_range, "span::at(): pos is out of range");
+        __stdx_assertx(pos < __m_size, std::out_of_range, "span::at(): pos is out of range");
 		return __m_data[pos];
 	}
 
@@ -259,7 +259,7 @@ public:
 	}
 
 	constexpr span<_Elem, dynamic_extent> subspan(size_type offset = 0, size_type n = npos) const {
-		__stdx_assert(offset < __m_size, std::out_of_range, "span::sub(): __pos is out of range");
+        __stdx_assertx(offset < __m_size, std::out_of_range, "span::sub(): __pos is out of range");
 		return span<_Elem, dynamic_extent>(__m_data + offset, (std::min)(n, __m_size - offset));
 	}
 

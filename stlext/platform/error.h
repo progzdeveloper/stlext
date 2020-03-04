@@ -50,22 +50,26 @@
 #endif
 
 
-#ifdef _DEBUG
+
+#ifdef _STDX_DEBUG
 
 #define _STDX_EFATAL -1
 #define _STDX_EWARN  1
 #define _STDX_EDEBUG 0
 
-#ifdef _DISABLE_EXCEPTIONS
-#define __stdx_except(_Exception, _Message, ...) ::stdx::debug::print_message(EFATAL, __FILE__, __LINE__, _Message, __VA_ARGS__)
+
+#ifdef _STDX_DISABLE_EXCEPTIONS
+#define __stdx_except(_Exception, _Message, ...) ::stdx::detail::print_message(_STDX_EFATAL, __FILE__, __LINE__, _Message, ##__VA_ARGS__)
 #else
-#define __stdx_except(_Exception, _Message, ...) ::stdx::detail::raise_exception<_Exception>(__FILE__, __LINE__, _Message, __VA_ARGS__)
+#define __stdx_except(_Exception, _Message, ...) ::stdx::detail::raise_exception<_Exception>(__FILE__, __LINE__, _Message, ##__VA_ARGS__)
 #endif
 
-#define __stdx_assert(_Expr, _Exception, _Message, ...) if (!(_Expr)) __stdx_except(_Exception, _Message, __VA_ARGS__)
-#define __stdx_warn(_Fmt, ...)  ::stdx::detail::print_message(EWARN,  __FILE__, __LINE__, _Fmt, __VA_ARGS__)
-#define __stdx_fatal(_Fmt, ...) ::stdx::detail::print_message(EFATAL, __FILE__, __LINE__, _Fmt, __VA_ARGS__)
-#define __stdx_debug(_Fmt, ...) ::stdx::detail::print_message(EDEBUG, __FILE__, __LINE__, _Fmt, __VA_ARGS__)
+#define __stdx_assert(_Expr, _Exception)                 if (!(_Expr)) __stdx_except(_Exception, "assertion: '%s' failed", ##_Expr)
+#define __stdx_assertx(_Expr, _Exception, _Message, ...) if (!(_Expr)) __stdx_except(_Exception, "assertion: '%s' failed with message: " _Message, #_Expr, ##__VA_ARGS__)
+#define __stdx_trace(_Fmt, ...) ::stdx::detail::print_message(_STDX_EDEBUG, __FILE__, __LINE__, _Fmt, ##__VA_ARGS__)
+#define __stdx_warn(_Fmt, ...)  ::stdx::detail::print_message(_STDX_EWARN,  __FILE__, __LINE__, _Fmt, ##__VA_ARGS__)
+#define __stdx_fatal(_Fmt, ...) ::stdx::detail::print_message(_STDX_EFATAL, __FILE__, __LINE__, _Fmt, ##__VA_ARGS__)
+
 
 _STDX_BEGIN
 
@@ -114,7 +118,7 @@ namespace detail
 		va_end(ap);
 
 		if (mode == _STDX_EFATAL) {
-#if defined(STDX_CMPLR_MSVC) && defined(_DEBUG)
+#if defined(STDX_CMPLR_MSVC) && defined(_STDX_DEBUG)
 			int reportMode = _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_WNDW);
 			_CrtSetReportMode(_CRT_ERROR, reportMode);
 
@@ -125,10 +129,10 @@ namespace detail
 				_CrtDbgBreak();
 #else
 			fputs(buffer, stderr);
-			exit(1);
+            abort();
 #endif
 		}
-#if defined(STDX_CMPLR_MSVC) && defined(_DEBUG)
+#if defined(STDX_CMPLR_MSVC) && defined(_STDX_DEBUG)
 		_CrtDbgReport(_CRT_WARN, NULL, 0, file, buffer);
 #else
 		fputs(buffer, stderr);
@@ -153,10 +157,13 @@ namespace detail
 _STDX_END
 
 #else
-#define __stdx_except(_Exception, _Message, ...) ((void)0)
-#define __stdx_assert(_Expr, _Exception, _Message, ...)         ((void)0)
-#define __stdx_warn(_Fmt, ...)   ((void)0)
-#define __stdx_fatal(_Fmt, ...)  ((void)0)
-#define __stdx_debug(_Fmt, ...)  ((void)0)
+
+#define __stdx_except(_Exception, _Message, ...)         ((void)0)
+#define __stdx_assert(_Expr, _Exception)                 ((void)0)
+#define __stdx_assertx(_Expr, _Exception, _Message, ...) ((void)0)
+#define __stdx_trace(_Fmt, ...)                          ((void)0)
+#define __stdx_warn(_Fmt, ...)                           ((void)0)
+#define __stdx_fatal(_Fmt, ...)                          ((void)0)
+
 #endif
 

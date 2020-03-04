@@ -392,7 +392,7 @@ public:
 	}
 
 	inline T operator- (const numeric_iterator& other) const {
-		__stdx_assert(__m_val == other.__m_val, std::logic_error, "iterators stride not equal");
+        __stdx_assertx(__m_val == other.__m_val, std::logic_error, "iterators stride not equal");
 		return ((__m_val - other.__m_val) / __m_step);
 	}
 

@@ -63,7 +63,7 @@ struct binary_scanner
 	template<class T>
 	void operator()(T& x) 
 	{
-		__stdx_assert(sizeof(T) <= size, std::underflow_error, "buffer underflow");
+        __stdx_assertx(sizeof(T) <= size, std::underflow_error, "buffer underflow");
 		memmove(reinterpret_cast<char*>(std::addressof(x)), buffer, sizeof(T));
 		buffer += sizeof(T);
 		size -= sizeof(T);

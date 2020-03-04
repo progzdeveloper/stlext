@@ -353,7 +353,7 @@ public:
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
 
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) // nothing to allocate
             return;
@@ -477,7 +477,7 @@ public:
     void assign(size_t n, _It first, _It last)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) {
             clear(); // clear everything and moves into local buffer
@@ -513,7 +513,7 @@ public:
     void reserve(size_t n)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n <= capacity())
             return; // never shrinks internal buffers
@@ -544,7 +544,7 @@ public:
     void resize(size_t n, bool v)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) {
             clear(); // clear everything and moves into local buffer
@@ -840,7 +840,7 @@ public:
         std::memset(__m_local_buf, 0, sizeof(__m_local_buf));
 
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) // nothing to allocate
             return;
@@ -967,7 +967,7 @@ public:
     void assign(size_t n, _It first, _It last)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) {
             clear(); // clear everything and moves into local buffer
@@ -1004,7 +1004,7 @@ public:
     void reserve(size_t n)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n <= capacity())
             return; // never shrinks internal buffers
@@ -1036,7 +1036,7 @@ public:
     void resize(size_t n, bool v)
     {
         // requested size is too large
-        __stdx_assert(n < max_size, std::overflow_error, "bit capacity overflow");
+        __stdx_assertx(n < max_size, std::overflow_error, "bit capacity overflow");
 
         if (n == 0) {
             clear(); // clear everything and moves into local buffer

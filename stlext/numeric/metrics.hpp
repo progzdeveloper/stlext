@@ -49,9 +49,9 @@ struct basic_metric
 	inline auto operator()(const std::pair<_It, _It>& x,
 						   const std::pair<_It, _It>& y) const
 	{
-		__stdx_assert(std::distance(x.first, x.second) == std::distance(y.first, y.second),
-					  std::invalid_argument,
-					  "x and y must have same dimensions");
+        __stdx_assertx(std::distance(x.first, x.second) == std::distance(y.first, y.second),
+                       std::invalid_argument,
+                       "x and y must have same dimensions");
 		return _Impl::distance(x.first, x.second, y.first);
 	}
 
@@ -65,9 +65,9 @@ struct basic_metric
 	template<class _Vector>
 	inline auto operator()(const _Vector& x, const _Vector& y) const
 	{
-		__stdx_assert(std::size(x) == std::size(y), 
-					  std::invalid_argument, 
-					  "x and y must have same dimensions");
+        __stdx_assertx(std::size(x) == std::size(y),
+                       std::invalid_argument,
+                       "x and y must have same dimensions");
 		return _Impl::distance(std::begin(x), std::end(x), std::begin(y));
 	}
 
@@ -142,9 +142,9 @@ struct basic_metric< T, minkowski_metric<T> >
 	inline auto operator()(const std::pair<_It, _It>& x,
 						   const std::pair<_It, _It>& y) const
 	{
-		__stdx_assert(std::distance(x.first, x.second) == std::distance(y.first, y.second),
-					  std::invalid_argument,
-					  "x and y must have same dimensions");
+        __stdx_assertx(std::distance(x.first, x.second) == std::distance(y.first, y.second),
+                       std::invalid_argument,
+                       "x and y must have same dimensions");
 		return _Impl::distance(x.first, x.second, y.first, __m_deg);
 	}
 
@@ -158,9 +158,9 @@ struct basic_metric< T, minkowski_metric<T> >
 	template<class _Vector>
 	inline auto operator()(const _Vector& x, const _Vector& y) const
 	{
-		__stdx_assert(std::size(x) == std::size(y),
-					  std::invalid_argument,
-					  "x and y must have same dimensions");
+        __stdx_assertx(std::size(x) == std::size(y),
+                       std::invalid_argument,
+                       "x and y must have same dimensions");
 		return _Impl::distance(std::begin(x), std::end(x), std::begin(y), __m_deg);
 	}
 

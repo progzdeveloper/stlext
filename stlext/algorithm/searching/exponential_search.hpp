@@ -72,7 +72,7 @@ _RandIt exponential_search(_RandIt first, _RandIt last, const _Key& key, _Comp c
 	if (first == last)
 		return last; // nothing to search
 
-	__stdx_assert(std::is_sorted(first, last, comp), 
+    __stdx_assertx(std::is_sorted(first, last, comp),
 				  std::invalid_argument, 
 				  "[first, last) range must be sorted");
 

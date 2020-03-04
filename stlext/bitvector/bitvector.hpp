@@ -337,7 +337,7 @@ public:
     \note throw out_of_range exception if pos is out of valid range
     */
     inline bool at(size_type pos) const {
-        __stdx_assert(pos < size(), std::out_of_range, "incorrect bit position");
+        __stdx_assertx(pos < size(), std::out_of_range, "incorrect bit position");
         return test(pos);
     }
 
@@ -490,7 +490,7 @@ public:
     */
     inline bitvector& operator&= (const bitvector& other)
     {
-        __stdx_assert(other.size() == size(), std::range_error, "incorrect range");
+        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
         // this code relies on auto-vectorization
         transform(cbegin(), cend(), other.begin(), begin(), std::bit_and<word_type>());
         return (*this);
@@ -505,7 +505,7 @@ public:
     */
     inline bitvector& operator|= (const bitvector& other)
     {
-        __stdx_assert(other.size() == size(), std::range_error, "incorrect range");
+        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
         // this code relies on auto-vectorization
         transform(cbegin(), cend(), other.begin(), begin(), std::bit_or<word_type>());
         return (*this);
@@ -520,7 +520,7 @@ public:
     */
     inline bitvector& operator^= (const bitvector& other)
     {
-        __stdx_assert(other.size() == size(), std::range_error, "incorrect range");
+        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
         // this code relies on auto-vectorization
         transform(cbegin(), cend(), other.begin(), begin(), std::bit_xor<word_type>());
         return (*this);
@@ -535,7 +535,7 @@ public:
     */
     inline bitvector& operator-=(const bitvector& other)
     {
-        __stdx_assert(other.size() == size(), std::range_error, "incorrect range");
+        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
         // this code relies on auto-vectorization
         transform(cbegin(), cend(), other.begin(), begin(), std::bit_andnot<word_type>());
         return (*this);
