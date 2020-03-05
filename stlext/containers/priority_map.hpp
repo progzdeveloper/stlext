@@ -44,13 +44,13 @@ _STDX_BEGIN
 
 
 template<
-class _Key,
-        class _Priority,
-        class _Hasher = std::hash<_Key>,
-        class _Comp = std::equal_to<_Key>,
-        class _Alloc = std::allocator<char>
-        >
-        class priority_set
+    class _Key,
+    class _Priority,
+    class _Hasher = std::hash<_Key>,
+    class _Comp = std::equal_to<_Key>,
+    class _Alloc = std::allocator<char>
+>
+class priority_set
 {
 public:
     typedef _Key   key_type;
@@ -325,13 +325,13 @@ private:
 
 
 template<
-        class _Key,
-        class _Value,
-        class _Priority,
-        class _Hasher = std::hash<_Key>,
-        class _Comp = std::equal_to<_Key>,
-        class _Alloc = std::allocator<char>
-        >
+    class _Key,
+    class _Value,
+    class _Priority,
+    class _Hasher = std::hash<_Key>,
+    class _Comp = std::equal_to<_Key>,
+    class _Alloc = std::allocator<char>
+>
 class priority_map
 {
 public:
