@@ -31,10 +31,13 @@
 #pragma once
 #include "../platform/common.h"
 
-#include "cxx14/integer_sequence.hpp"
 
-#if defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800 || \
-    defined(STDX_CMPLR_GNU) && STDX_CMPLR_GNU <= 500
+
+#if (defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800) || \
+    (defined(STDX_CMPLR_GNU) && (STDX_CMPLR_GNU < 500)) || \
+    (defined(STDX_CMPLR_INTEL) && STDX_CMPLR_INTEL <= 1800)
+
+#include "cxx14/integer_sequence.hpp"
 
 // expose to std namespace
 namespace std {
@@ -45,4 +48,6 @@ namespace std {
 	using stdx::index_sequence_for;
 }
 
+#else
+#include <utility>
 #endif
