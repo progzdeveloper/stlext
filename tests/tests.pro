@@ -39,6 +39,7 @@ SOURCES += \
     iostreams/ratio.cpp \
     iterator/iterators.cpp \
     main.cpp \
-    containers/lru_cache.cpp
+    containers/lru_cache.cpp \
+    containers/span.cpp
 
 
