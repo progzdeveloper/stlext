@@ -38,25 +38,28 @@
 
 _STDX_BEGIN
 
+
 template<class _InIt,  class _OutIt>
-inline _OutIt to_upper(_InIt first, _InIt last, _OutIt out) {
-    return std::transform(first, last, out, [](auto c) {
-        return static_cast<decltype(c)>(toupper(c));
+inline _OutIt to_upper(_InIt first, _InIt last, _OutIt out, const std::locale& lc) {
+    return std::transform(first, last, out, [&lc](auto c) {
+        return static_cast<decltype(c)>(std::toupper(c, lc));
     });
 }
 
 template<class _Char, class _Alloc, class _Traits, class _OutIt>
-inline _OutIt to_upper(const std::basic_string<_Char, _Alloc, _Traits>& s, _OutIt out)
+inline _OutIt to_upper(const std::basic_string<_Char, _Alloc, _Traits>& s, _OutIt out,
+                       const std::locale& lc = std::locale())
 {
-    return to_upper(s.begin(), s.end(), out);
+    return to_upper(s.begin(), s.end(), out, lc);
 }
 
 template<class _Char, class _Alloc, class _Traits>
-inline std::basic_string<_Char, _Alloc, _Traits> to_upper(const std::basic_string<_Char, _Alloc, _Traits>& s)
+inline std::basic_string<_Char, _Alloc, _Traits> to_upper(const std::basic_string<_Char, _Alloc, _Traits>& s,
+                                                          const std::locale& lc = std::locale())
 {
     std::basic_string<_Char, _Alloc, _Traits> result;
     result.reserve(s.size());
-    to_upper(s, std::back_inserter(result));
+    to_upper(s, std::back_inserter(result), lc);
     return result;
 }
 
@@ -64,27 +67,30 @@ inline std::basic_string<_Char, _Alloc, _Traits> to_upper(const std::basic_strin
 
 
 template<class _InIt,  class _OutIt>
-inline _OutIt to_lower(_InIt first, _InIt last, _OutIt out)
+inline _OutIt to_lower(_InIt first, _InIt last, _OutIt out, const std::locale& lc)
 {
-    return std::transform(first, last, out, [](auto c) {
-        return static_cast<decltype(c)>(tolower(c));
+    return std::transform(first, last, out, [&lc](auto c) {
+        return static_cast<decltype(c)>(std::tolower(c, lc));
     });
 }
 
 template<class _Char, class _Alloc, class _Traits, class _OutIt>
-inline _OutIt to_lower(const std::basic_string<_Char, _Alloc, _Traits>& s, _OutIt out)
+inline _OutIt to_lower(const std::basic_string<_Char, _Alloc, _Traits>& s, _OutIt out,
+                       const std::locale& lc = std::locale())
 {
-    return to_lower(s.begin(), s.end(), out);
+    return to_lower(s.begin(), s.end(), out, lc);
 }
 
 template<class _Char, class _Alloc, class _Traits>
-inline std::basic_string<_Char, _Alloc, _Traits> to_lower(const std::basic_string<_Char, _Alloc, _Traits>& s)
+inline std::basic_string<_Char, _Alloc, _Traits> to_lower(const std::basic_string<_Char, _Alloc, _Traits>& s,
+                                                          const std::locale& lc = std::locale())
 {
     std::basic_string<_Char, _Alloc, _Traits> result;
     result.reserve(s.size());
-    to_lower(s, std::back_inserter(result));
+    to_lower(s, std::back_inserter(result), lc);
     return result;
 }
+
 
 
 _STDX_END
