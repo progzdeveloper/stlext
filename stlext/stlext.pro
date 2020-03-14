@@ -157,7 +157,8 @@ HEADERS += \
     tuple/tupleio.hpp \
     tuple/tuple_transform.hpp \
     tuple/tuple_utils.hpp \
-    cui/termcolor.hpp
+    cui/termcolor.hpp \
+    algorithm/ext/stralgo.hpp
 
 
 
