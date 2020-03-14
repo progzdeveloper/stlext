@@ -119,7 +119,7 @@ public:
 	}
 
 	basic_progress_viewer(const range_type& range,
-				const string_type& __format = detail::format_traits<_Char>::format(),
+                const string_type& format = detail::format_traits<_Char>::format(),
 				int filler = '*', size_type max_length = 32)
 	{
 		__construct(range, format, filler, max_length);
