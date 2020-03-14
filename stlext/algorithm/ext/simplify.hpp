@@ -33,6 +33,9 @@
 #include <algorithm>
 #include <iterator>
 
+#include "../../platform/common.h"
+
+_STDX_BEGIN
 
 /*!
  * \brief simplify simplifies input range by removing consequentive elements that satisfy the
@@ -90,4 +93,5 @@ _OutIt simplify(_BiIt first, _BiIt last, _OutIt out, _Pred pr, _Elem e)
     return (out);
 }
 
+_STDX_END
 
