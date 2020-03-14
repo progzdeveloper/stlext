@@ -37,6 +37,7 @@
 _STDX_BEGIN
 
 
+#if 0
 /// Non-standard
 /*!
  * \fn slide_apply(_It first, _It last, size_t width, _Fn2 op, bool strict)
@@ -73,6 +74,83 @@ inline _Fn2 slide_apply(_It first, _It last, size_t width, _Fn2 op, bool strict 
 	op(first, it);
 	return move(op);
 }
+#endif
+
+/// Non-standard
+/*!
+ * \fn exclusive_slide
+ * \brief exclusive_slide Apply target function to subrange of elements [first, last);
+ * subrange is selected by sliding window with width \a width.
+ *
+ * The prefix 'exclusive ' means that if distance of source range [first, last)
+ * is less than width of sliding window, than function does nothing and return immediately.
+ *
+ * \tparam _It  models input iterator
+ * \tparam _Fn2 models binary function
+ *
+ * \param first   The start of the input sequence
+ * \param last    One past the end of the input sequence
+ * \param width   width of sliding window
+ * \param op      binary function to be applied for pair of iterators
+ * \return The updated output iterator
+ */
+template<class _It, class _Fn2>
+inline _Fn2 exclusive_slide(_It first, _It last, size_t width, _Fn2 op)
+{
+    using namespace std;
+    if (distance(first, last) < ptrdiff_t(width)) {
+        return move(op);
+    }
+    _It it = first;
+    advance(it, width);
+    for (; it != last;) {
+        op(first, it);
+        advance(first, 1);
+        advance(it, 1);
+    }
+    op(first, it);
+    return move(op);
+}
+
+/// Non-standard
+/*!
+ * \fn inclusive_slide
+ * \brief inclusive_slide Apply target function to subrange of elements [first, last);
+ * subrange is selected by sliding window with width \a width.
+ *
+ * The prefix 'inclusive ' means that if distance of source range [first, last)
+ * is less than width of sliding window, than function applies the operation op only
+ * once on a truncated range [first, first + width) before return.
+ *
+ * \tparam _It  models input iterator
+ * \tparam _Fn2 models binary function
+ *
+ * \param first   The start of the input sequence
+ * \param last    One past the end of the input sequence
+ * \param width   width of sliding window
+ * \param op      binary function to be applied for pair of iterators
+ * \return The updated output iterator
+ */
+template<class _It, class _Fn2>
+inline _Fn2 inclusive_slide(_It first, _It last, size_t width, _Fn2 op)
+{
+    using namespace std;
+    if (distance(first, last) < ptrdiff_t(width)) {
+        op(first, last);
+        return move(op);
+    }
+    _It it = first;
+    advance(it, width);
+    for (; it != last;) {
+        op(first, it);
+        advance(first, 1);
+        advance(it, 1);
+    }
+    op(first, it);
+    return move(op);
+}
+
+
 
 /// Non-standard
 /*!

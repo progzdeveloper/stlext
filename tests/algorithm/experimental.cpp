@@ -30,53 +30,54 @@
 
 #include <stlext/algorithm/experimental.h>
 
-namespace detail
+namespace detail {
+
+
+template<class _Container>
+static inline void __slide_apply_helper()
 {
-	template<class _Container>
-	static inline void __slide_apply_helper()
-	{
-		using namespace std;
-		static const size_t kWidth = 4;
-		_Container vec;
-		for (int i = 0; i < 10; i++)
-			vec.push_back(i);
-		typedef typename _Container::iterator vecit;
-		typedef pair<vecit, vecit> iter_range;
+    using namespace std;
+    static const size_t kWidth = 4;
+    _Container vec;
+    for (int i = 0; i < 10; i++)
+        vec.push_back(i);
+    typedef typename _Container::iterator vecit;
+    typedef pair<vecit, vecit> iter_range;
 
-		vector<iter_range> vranges_orig;
-		vector<iter_range> vranges;
-		auto lambda0 = [&vranges_orig](vecit f, vecit l) {
-			vranges_orig.emplace_back(f, l);
-		};
-		auto lambda1 = [&vranges](vecit f, vecit l) {
-			vranges.emplace_back(f, l);
-		};
-		stdx::slide_apply(vec.begin(), vec.end(), kWidth, lambda0);
+    vector<iter_range> vranges_orig;
+    vector<iter_range> vranges;
+    auto lambda0 = [&vranges_orig](vecit f, vecit l) {
+        vranges_orig.emplace_back(f, l);
+    };
+    auto lambda1 = [&vranges](vecit f, vecit l) {
+        vranges.emplace_back(f, l);
+    };
+    stdx::inclusive_slide(vec.begin(), vec.end(), kWidth, lambda0);
 
-		for (size_t i = 0; i < vranges_orig.size(); i++) {
-			REQUIRE(equal(next(vec.begin(), i), next(vec.begin(), (i + kWidth)), vranges_orig[i].first));
-		}
+    for (size_t i = 0; i < vranges_orig.size(); i++) {
+        REQUIRE(equal(next(vec.begin(), i), next(vec.begin(), (i + kWidth)), vranges_orig[i].first));
+    }
 
-		vec.pop_back();
+    vec.pop_back();
 
-		stdx::slide_apply(vec.begin(), vec.end(), kWidth, lambda1);
-		REQUIRE((vranges_orig.size() - 1) == vranges.size());
-		for (size_t i = 0; i < vranges.size(); i++) {
-			REQUIRE(equal(next(vec.begin(), i), next(vec.begin(), (i + kWidth)), vranges_orig[i].first));
-		}
+    stdx::inclusive_slide(vec.begin(), vec.end(), kWidth, lambda1);
+    REQUIRE((vranges_orig.size() - 1) == vranges.size());
+    for (size_t i = 0; i < vranges.size(); i++) {
+        REQUIRE(equal(next(vec.begin(), i), next(vec.begin(), (i + kWidth)), vranges_orig[i].first));
+    }
 
-		vranges.clear();
-		vec.resize(3);
-		stdx::slide_apply(vec.begin(), vec.end(), kWidth, lambda1);
-		REQUIRE(vranges.empty());
+    vranges.clear();
+    vec.resize(3);
+    stdx::exclusive_slide(vec.begin(), vec.end(), kWidth, lambda1);
+    REQUIRE(vranges.empty());
 
-		stdx::slide_apply(vec.begin(), vec.end(), kWidth, lambda1, false);
-		REQUIRE(vranges.size() == size_t(1));
-		//REQUIRE(std::distance(vec.begin(), vec.end()) == distance(vranges[0].first, vranges[0].second), L"subrange must be equal size with vector");
-		REQUIRE(equal(vec.begin(), vec.end(), vranges[0].first));
-	}
+    stdx::inclusive_slide(vec.begin(), vec.end(), kWidth, lambda1);
+    REQUIRE(vranges.size() == size_t(1));
+    //REQUIRE(std::distance(vec.begin(), vec.end()) == distance(vranges[0].first, vranges[0].second), L"subrange must be equal size with vector");
+    REQUIRE(equal(vec.begin(), vec.end(), vranges[0].first));
+}
 
-	
+
 } // end namespace detail
 
 
