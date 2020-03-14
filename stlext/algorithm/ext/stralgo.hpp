@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Michael Polukarov (Russia).
+// Copyright (c) 2020, Michael Polukarov (Russia).
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
