@@ -156,7 +156,8 @@ HEADERS += \
     tuple/tuple_foreach.hpp \
     tuple/tupleio.hpp \
     tuple/tuple_transform.hpp \
-    tuple/tuple_utils.hpp
+    tuple/tuple_utils.hpp \
+    cui/termcolor.hpp
 
 
 

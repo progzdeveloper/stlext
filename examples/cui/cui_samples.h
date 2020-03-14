@@ -7,6 +7,7 @@
 #include <stlext/cui/progress_viewer.hpp>
 #include <stlext/cui/progress_watcher.hpp>
 #include <stlext/cui/noecho.hpp>
+#include <stlext/cui/termcolor.hpp>
 #include <stlext/cui/prompt.hpp>
 
 #include "../record.h"
@@ -24,7 +25,7 @@ static void progress_viewer_example()
 	// progress bar width 32 chars and a special format.
 	// Possible output may look like this:
 	// [###                      ] 21% (210/1000) speed: 9 eps ETA: 7 sec
-	stdx::progress_viewer<uint64_t> progress(0, 1000, "] %p% (%c/%t) speed: %s eps ETA: %e sec", '#', 32);
+    stdx::progress_viewer<uint64_t> progress(0, 1000, "] %p% (%c/%t) speed: %s eps ETA: %e sec", '#', 32);
 	// execute log running computations
 	for (size_t i = 0; i <= 1000; i++)
 	{
@@ -32,8 +33,14 @@ static void progress_viewer_example()
 		// Note that you must ensure that no other thread or function
 		// DOES NOT use std::cout in any way to escape clobbering output 
 		// of progress bar!
-		cout << '[' << progress(i); 
-		
+
+        if (progress.progress() < 40.0)
+            cout << stdx::foreground<stdx::red>;
+        else if (progress.progress() < 80.0)
+            cout << stdx::foreground<stdx::yellow>;
+        else
+            cout << stdx::foreground<stdx::green>;
+        cout << '[' << progress(i) << stdx::uncolorize;
 		// simulate work -- sleep for 100 milliseconds
 		this_thread::sleep_for(milliseconds(10));
 	}
