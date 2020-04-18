@@ -215,7 +215,47 @@ TEST_CASE("bitvector/flip", "[bitvector]")
 	REQUIRE("010101010101010000000000111111100010111000001100000101010000010101010101010101000000000011111110001011100000110000010101000001010101010101010100000000001111111000101110000011000001010100000101010101010101010000000000111111100010111000001100000101" == s);
 }
 
+TEST_CASE("bitvector/equal_range", "[bitvector]")
+{
+    typedef stdx::bitvector<> bitvec;
+    std::bitset<65> _bits("00000001110100011111001111101010111100000000000000000001111111111");
+    bitvec bits(_bits);
+    auto p1 = stdx::equal_range(bits.begin(), bits.end(), 1);
+    REQUIRE(p1.second - p1.first == 10);
+    auto p2 = stdx::equal_range(bits.begin(), bits.end(), 0);
+    REQUIRE(p2.second - p2.first == 19);
+}
 
+TEST_CASE("bitvector/search_n", "[bitvector]")
+{
+    typedef stdx::bitvector<> bitvec;
+    std::bitset<65> _bits1("00000001110100011111001111101010111100000000000000000001111111111");
+    bitvec bits1(_bits1);
+    auto p1 = stdx::search_n(bits1.begin(), bits1.end(), 4, 1);
+    REQUIRE(p1 == bits1.begin());
+    auto p2 = stdx::search_n(bits1.begin(), bits1.end(), 15, 0);
+    REQUIRE(std::distance(bits1.begin(), p2) == 10);
+
+    std::bitset<76> _bits2("1111111111000000000000000000000000000000000000000000000000000000000000000001");
+    bitvec bits2(_bits2);
+    auto p3 = stdx::search_n(bits2.begin(), bits2.end(), 10, 1);
+    REQUIRE(std::distance(bits2.begin(), p3) == 66);
+
+    std::bitset<76> _bits3("0000000000111111111111111111111111111111111111111111111111111111111111111110");
+    bitvec bits3(_bits3);
+    auto p4 = stdx::search_n(bits3.begin(), bits3.end(), 10, 0);
+    REQUIRE(std::distance(bits3.begin(), p4) == 66);
+
+    std::bitset<76> _bits4("0000000000000000000000000000000000000000000000000000000000000000000000000001");
+    bitvec bits4(_bits4);
+    auto p5 = stdx::search_n(bits4.begin(), bits4.end(), 3, 1);
+    REQUIRE(std::distance(bits4.end(), p5) == 0);
+
+    std::bitset<76> _bits5("1111111111111111111111111111111111111111111111111111111111111111111111111111");
+    bitvec bits5(_bits5);
+    auto p6 = stdx::search_n(bits5.begin(), bits5.end(), 3, 0);
+    REQUIRE(std::distance(bits5.end(), p6) == 0);
+}
 
 TEST_CASE("bitvector/compare", "[bitvector]")
 {

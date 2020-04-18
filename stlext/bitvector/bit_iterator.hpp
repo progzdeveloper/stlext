@@ -1818,10 +1818,53 @@ void reverse(bit_iterator<_Word, _IsConst> first, bit_iterator<_Word, _IsConst> 
 
 
 
+template <class _Word, bool _IsConst, class _Tp>
+std::pair<
+    bit_iterator<_Word, _IsConst>,
+    bit_iterator<_Word, _IsConst>
+>  equal_range(bit_iterator<_Word, _IsConst> first, bit_iterator<_Word, _IsConst> last, const _Tp& x)
+{
+    if (static_cast<bool>(!!x)) {
+        first = __find_bool_true(first, last - first);
+        return std::make_pair(first, first != last ? __find_bool_false(first, last - first) : last);
+    } else {
+        first = __find_bool_false(first, last - first);
+        return std::make_pair(first, first != last ? __find_bool_true(first, last - first) : last);
+    }
+}
 
+template <class _Word, bool _IsConst, class _Size, class _Tp>
+bit_iterator<_Word, _IsConst> search_n(bit_iterator<_Word, _IsConst> first, bit_iterator<_Word, _IsConst> last, _Size n, const _Tp& x)
+{
+    if (n <= 0)
+        return first;
 
+    if (n == 1) {
+        return (static_cast<bool>(!!x)) ?
+                    __find_bool_true(first, last - first) :
+                    __find_bool_false(first, last - first);
+    }
 
-
+    if (static_cast<bool>(!!x)) {
+        first = __find_bool_true(first, last - first);
+        while(first != last) {
+            auto end =  __find_bool_false(first, last - first);
+            if ((end - first) >= n)
+                return first;
+            first = __find_bool_true(end, last - end);
+        }
+        return last;
+    } else {
+        first = __find_bool_false(first, last - first);
+        while(first != last) {
+            auto end =  __find_bool_true(first, last - first);
+            if ((end - first) >= n)
+                return first;
+            first = __find_bool_false(end, last - end);
+        }
+        return last;
+    }
+}
 
 
 // [code-review] может лучше назвать mismatch?
