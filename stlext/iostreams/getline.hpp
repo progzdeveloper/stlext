@@ -37,19 +37,18 @@
 _STDX_BEGIN
 
 template<
-	class _Elem,
-	class _Traits,
-	class _Alloc,
-	class _Predicate
+class _Elem,
+    class _Traits,
+    class _Alloc,
+    class _Predicate
 >
-inline std::basic_istream<_Elem, _Traits>& getline(
-	std::basic_istream<_Elem, _Traits>& stream,
-    std::basic_string<_Elem, _Traits, _Alloc>& str,
-	const _Predicate& pr)
-{	// get characters into string, discard delimiters
+inline std::basic_istream<_Elem, _Traits>& getline(std::basic_istream<_Elem, _Traits>& stream,
+                                                   std::basic_string<_Elem, _Traits, _Alloc>& str,
+                                                   const _Predicate& pr)
+{   // get characters into string, discard delimiters
 
-	using namespace std;
-	typedef basic_istream<_Elem, _Traits> stream_type;
+    using namespace std;
+    typedef basic_istream<_Elem, _Traits> stream_type;
 
     ios_base::iostate state = ios_base::goodbit;
     bool changed = false;
@@ -57,69 +56,63 @@ inline std::basic_istream<_Elem, _Traits>& getline(
     const typename stream_type::sentry guard(stream, true);
 
     if (guard)
-	{	// state okay, extract characters
-		try {
+    {	// state okay, extract characters
+        try {
             str.erase(); // clear string
 
-			typename _Traits::int_type _Meta = stream.rdbuf()->sgetc();
-			for(; ; _Meta = stream.rdbuf()->snextc()) 
-			{	// find first non-escaped character of EOF
-				if (_Traits::eq_int_type(_Traits::eof(), _Meta))
-				{	// end of file, quit
+            typename _Traits::int_type _Meta = stream.rdbuf()->sgetc();
+            for(; ; _Meta = stream.rdbuf()->snextc())
+            {	// find first non-escaped character of EOF
+                if (_Traits::eq_int_type(_Traits::eof(), _Meta))
+                {	// end of file, quit
                     state |= ios_base::eofbit;
                     state |= ios_base::failbit;
-					break;
-				}
-				if (!pr(_Meta))
-					break;
-			} 
+                    break;
+                }
+                if (!pr(_Meta))
+                    break;
+            }
 
             if (state & ios_base::eofbit) { // end-of-stream
                 stream.setstate(state);
-				return (stream); // bail out
-			}
+                return (stream); // bail out
+            }
 
-			for (; ; _Meta = stream.rdbuf()->snextc())
-			{
-				if (_Traits::eq_int_type(_Traits::eof(), _Meta))
-				{	// end of file, quit
+            for (; ; _Meta = stream.rdbuf()->snextc())
+            {
+                if (_Traits::eq_int_type(_Traits::eof(), _Meta))
+                {	// end of file, quit
                     state |= ios_base::eofbit;
-					break;
-				}
-				else if (pr(_Meta))
-				{	// got a delimiter, discard it and quit
+                    break;
+                }
+                else if (pr(_Meta))
+                {	// got a delimiter, discard it and quit
                     changed = true;
-					stream.rdbuf()->sbumpc();
-					break;
-				}
+                    stream.rdbuf()->sbumpc();
+                    break;
+                }
                 else if (str.max_size() <= str.size())
-				{	// string too large, quit
+                {	// string too large, quit
                     state |= ios_base::failbit;
-					break;
-				}
-				else
-				{	// got a character, add it to string
+                    break;
+                }
+                else
+                {	// got a character, add it to string
                     str += _Traits::to_char_type(_Meta);
                     changed = true;
-				}
-			}
-		}
+                }
+            }
+        }
         catch (...) {
-			stream.setstate(ios_base::badbit);
-		}
-	}
+            stream.setstate(ios_base::badbit);
+        }
+    }
 
     if (!changed)
         state |= ios_base::failbit;
     stream.setstate(state);
-	return (stream);
+    return (stream);
 }
 
-
-
 _STDX_END
-
-
-
-
 

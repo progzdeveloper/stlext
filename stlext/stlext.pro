@@ -159,7 +159,10 @@ HEADERS += \
     tuple/tuple_utils.hpp \
     cui/termcolor.hpp \
     algorithm/ext/stralgo.hpp \
-    algorithm/ext/simplify.hpp
+    algorithm/ext/simplify.hpp \
+    iterator/enumeration.hpp \
+    iostreams/codecs_alpha.hpp \
+    algorithm/ext/distances.hpp
 
 
 

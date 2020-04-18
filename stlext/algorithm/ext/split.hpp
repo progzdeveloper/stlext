@@ -43,103 +43,103 @@ _STDX_BEGIN
 
 namespace detail
 {
-	template<
-		typename _SStream,
-		typename _InIt,
-		typename _Pred,
-		typename _Arg
-	>
-	_InIt __split_element(_SStream& stream, _InIt first, _InIt last, _Pred pred, _Arg& val)
-	{
-		if (first == last) return last;
+    template<
+        class _SStream,
+        class _InIt,
+        class _Pred,
+        class _Arg
+    >
+    _InIt __split_element(_SStream& stream, _InIt first, _InIt last, _Pred pred, _Arg& val)
+    {
+        if (first == last) return last;
 
-		auto it = first;
+        auto it = first;
 
-		// search the start position
-		for (; it != last; ++it)
-		{
-			if (!pred(*it)) {
-				first = it;
-				break;
-			}
-		}
+        // search the start position
+        for (; it != last; ++it)
+        {
+            if (!pred(*it)) {
+                first = it;
+                break;
+            }
+        }
 
-		if (first == last)
-			return last;
+        if (first == last)
+            return last;
 
-		++it;
-		// search the end position
-		for (; it != last && !pred(*it);) {
-			++it;
-		}
+        ++it;
+        // search the end position
+        for (; it != last && !pred(*it);) {
+            ++it;
+        }
 
-		stream.str({ first, it }); // reset internal buffer
-		stream >> val; // read value
-		stream.clear(); // buffer cleaup
-		return it;
-	}
+        stream.str({ first, it }); // reset internal buffer
+        stream >> val; // read value
+        stream.clear(); // buffer cleaup
+        return it;
+    }
 
-	// TODO: replace it with lambda hack
-	template<int I, int N>
-	struct tuple_split
-	{
-		template<
-			typename _Tuple,
-			typename _SStream,
-			typename _InIt,
-			typename _Pred
-		>
-		static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
-			first = __split_element(stream, first, last, pred, std::get<I>(src));
-			return (tuple_split<I + 1, N>::apply(src, stream, first, last, pred));
-		}
-	};
+    // TODO: replace it with lambda hack
+    template<int I, int N>
+    struct tuple_split
+    {
+        template<
+            class _Tuple,
+            class _SStream,
+            class _InIt,
+            class _Pred
+        >
+        static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
+            first = __split_element(stream, first, last, pred, std::get<I>(src));
+            return (tuple_split<I + 1, N>::apply(src, stream, first, last, pred));
+        }
+    };
 
-	template<int N>
-	struct tuple_split<N, N>
-	{
-		template<
-			typename _Tuple,
-			typename _SStream,
-			typename _InIt,
-			typename _Pred
-		>
-		static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
-			return __split_element(stream, first, last, pred, std::get<N>(src));
-		}
-	};
+    template<int N>
+    struct tuple_split<N, N>
+    {
+        template<
+            class _Tuple,
+            class _SStream,
+            class _InIt,
+            class _Pred
+        >
+        static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
+            return __split_element(stream, first, last, pred, std::get<N>(src));
+        }
+    };
 
-	template<>
-	struct tuple_split<0, 0>
-	{
-		template<
-			typename _Tuple,
-			typename _SStream,
-			typename _InIt,
-			typename _Pred
-		>
-		static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
-			return __split_element(stream, first, last, pred, std::get<0>(src));
-		}
-	};
+    template<>
+    struct tuple_split<0, 0>
+    {
+        template<
+            class _Tuple,
+            class _SStream,
+            class _InIt,
+            class _Pred
+        >
+        static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) {
+            return __split_element(stream, first, last, pred, std::get<0>(src));
+        }
+    };
 
-	template<>
-	struct tuple_split<0, -1>
-	{
-		template<
-			typename _Tuple,
-			typename _SStream,
-			typename _InIt,
-			typename _Pred
-		>
-		static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) { }
-	};
+    template<>
+    struct tuple_split<0, -1>
+    {
+        template<
+            class _Tuple,
+            class _SStream,
+            class _InIt,
+            class _Pred
+        >
+        static inline _InIt apply(_Tuple& src, _SStream& stream, _InIt first, _InIt last, _Pred pred) { }
+    };
 
 } // end namespace detail
 
 /*!
  * \brief split
- * split [first, last) range of elements using 
+ * split [first, last) range of elements using
  * boolean predicate \a pred, and invoke action \a action
  * while passing subrange on it.
  *
@@ -147,34 +147,20 @@ namespace detail
 template<typename _InIt, typename _Pred, typename _Fx>
 void split(_InIt first, _InIt last, _Pred pred, _Fx action)
 {
-	if (first == last) return;
+    if (first == last)
+        return;
 
-	_InIt it = first;
-	for (;;)
-	{
-		// search the start position
-		for (; it != last; ++it)
-		{
-			if (!pred(*it)) {
-				first = it;
-				break;
-			}
-		}
+    for (;;)
+    {
+        first = std::find_if_not(first, last, pred);
+        if (first == last)
+            break;
 
-		if (first == last)
-			break;
+        _InIt it = std::find_if(std::next(first), last, pred);
+        action(first, it); // apply action to sub range
 
-		++it;
-		// search the end position
-		for (; it != last && !pred(*it);) {
-			++it;
-		}
-
-		// apply action to sub range
-		action(first, it);
-		first = last;
-	}
-
+        first =  std::next(it);
+    }
 }
 
 /*!
@@ -186,36 +172,22 @@ void split(_InIt first, _InIt last, _Pred pred, _Fx action)
 template<typename _InIt, typename _OutIt, typename _Pred>
 _OutIt split_copy(_InIt first, _InIt last, _OutIt out, _Pred pred)
 {
-	if (first == last) return out;
+    if (first == last)
+        return out;
 
-	_InIt it = first;
-	for (;;)
-	{
-		// search the start position
-		for (; it != last; ++it)
-		{
-			if (!pred(*it)) {
-				first = it;
-				break;
-			}
-		}
+    for (;;)
+    {
+        first = std::find_if_not(first, last, pred);
+        if (first == last)
+            break;
 
-		if (first == last)
-			break;
+        _InIt it = std::find_if(std::next(first), last, pred);
+        *out = { first, it }; ++out; // assign a sub range to output iterator
 
-		++it;
-		// search the end position
-		for (; it != last && !pred(*it);) {
-			++it;
-		}
+        first =  std::next(it);
+    }
 
-		// get the sub range and 
-		// create result using 
-		// brace initialization
-		*out = { first, it };
-		first = last;
-	}
-	return out;
+    return out;
 }
 
 
@@ -227,7 +199,7 @@ _OutIt split_copy(_InIt first, _InIt last, _OutIt out, _Pred pred)
  */
 template<typename _Container, typename _OutIt, typename _Pred>
 inline _OutIt split_copy(const _Container& c, _OutIt out, _Pred pred) {
-	return split_copy(std::begin(c), std::end(c), out, pred);
+    return split_copy(std::begin(c), std::end(c), out, pred);
 }
 
 /*!
@@ -238,7 +210,7 @@ inline _OutIt split_copy(const _Container& c, _OutIt out, _Pred pred) {
  */
 template<typename _Tx, size_t _Size, typename _OutIt, typename _Pred>
 inline _OutIt split_copy(const _Tx (&input)[_Size], _OutIt out, _Pred pred) {
-	return split_copy(std::begin(input), std::end(input), out, pred);
+    return split_copy(std::begin(input), std::end(input), out, pred);
 }
 
 
@@ -251,21 +223,21 @@ inline _OutIt split_copy(const _Tx (&input)[_Size], _OutIt out, _Pred pred) {
  *
  */
 template<
-	typename _Elem,
-	typename _Traits,
-	typename _Alloc,
-	typename _Pred,
-	typename... _Args
->
+        typename _Elem,
+        typename _Traits,
+        typename _Alloc,
+        typename _Pred,
+        typename... _Args
+        >
 inline void split_into(const std::basic_string<_Elem, _Traits, _Alloc>& line, _Pred pred, std::tuple<_Args...>& args)
 {
-	using namespace std;
-	typedef basic_istringstream<_Elem, _Traits, _Alloc> stream_type;
-	typedef tuple<_Args...> tuple_type;
-	typedef detail::tuple_split<0, int(tuple_size<tuple_type>::value) - 1> visitor;
+    using namespace std;
+    typedef basic_istringstream<_Elem, _Traits, _Alloc> stream_type;
+    typedef tuple<_Args...> tuple_type;
+    typedef detail::tuple_split<0, int(tuple_size<tuple_type>::value) - 1> visitor;
 
-	stream_type stream;
-	visitor::apply(args, stream, begin(line), end(line), pred);
+    stream_type stream;
+    visitor::apply(args, stream, begin(line), end(line), pred);
 }
 
 
@@ -277,20 +249,20 @@ inline void split_into(const std::basic_string<_Elem, _Traits, _Alloc>& line, _P
  *
  */
 template<
-	typename _Elem,
-	size_t _Size,
-	typename _Pred,
-	typename... _Args
->
+        typename _Elem,
+        size_t _Size,
+        typename _Pred,
+        typename... _Args
+        >
 inline void split_into(const _Elem (&line)[_Size], _Pred pred, std::tuple<_Args...>& args)
 {
-	using namespace std;
-	typedef basic_istringstream< _Elem, char_traits<_Elem> > stream_type;
-	typedef tuple< _Args... > tuple_type;
-	typedef detail::tuple_split<0, int(tuple_size<tuple_type>::value) - 1> visitor;
+    using namespace std;
+    typedef basic_istringstream< _Elem, char_traits<_Elem> > stream_type;
+    typedef tuple< _Args... > tuple_type;
+    typedef detail::tuple_split<0, int(tuple_size<tuple_type>::value) - 1> visitor;
 
-	stream_type stream;
-	visitor::apply(args, stream, begin(line), end(line), pred);
+    stream_type stream;
+    visitor::apply(args, stream, begin(line), end(line), pred);
 }
 
 
@@ -301,16 +273,16 @@ inline void split_into(const _Elem (&line)[_Size], _Pred pred, std::tuple<_Args.
  *
  */
 template <
-	typename _Elem,
-	typename _Traits,
-	typename _Alloc,
-	typename _Pred,
-	typename... _Args
->
+        typename _Elem,
+        typename _Traits,
+        typename _Alloc,
+        typename _Pred,
+        typename... _Args
+        >
 inline void split_into(const std::basic_string<_Elem, _Traits, _Alloc>& line, _Pred pred, _Args&... args)
 {
-	auto packed_args = std::forward_as_tuple(args...);
-	split_into(line, pred, packed_args);
+    auto packed_args = std::forward_as_tuple(args...);
+    split_into(line, pred, packed_args);
 }
 
 
@@ -321,15 +293,15 @@ inline void split_into(const std::basic_string<_Elem, _Traits, _Alloc>& line, _P
  *
  */
 template<
-	typename _Elem,
-	size_t _Size,
-	typename _Pred,
-	typename... _Args
->
+        typename _Elem,
+        size_t _Size,
+        typename _Pred,
+        typename... _Args
+        >
 inline void split_into(const _Elem(&line)[_Size], _Pred pred, _Args&... args)
 {
-	auto packed_args = std::forward_as_tuple(args...);
-	split_into(line, pred, packed_args);
+    auto packed_args = std::forward_as_tuple(args...);
+    split_into(line, pred, packed_args);
 }
 
 

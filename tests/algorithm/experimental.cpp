@@ -202,6 +202,78 @@ TEST_CASE("algorithms/kadane_sum", "[algorithm.experimental]")
 	REQUIRE(std::get<0>(min_result) == min_weight);
 }
 
+TEST_CASE("algorithms/split", "[algorithm.experimental]")
+{
+    static const auto predicate = [](char c) { return (std::isspace(c) || std::ispunct(c)); };
+
+    int count = 0;
+
+    std::string delims;
+    stdx::split(delims.begin(), delims.end(), predicate, [&count](auto /*first*/, auto /*last*/) {
+        ++count;
+    });
+    REQUIRE(count == 0);
+
+    delims = "?!,... ;:[]{\t}<>/\\^%$##@@)(  \r\n\r\n  /).\"''|*-%    ";
+    stdx::split(delims.begin(), delims.end(), predicate, [&count](auto /*first*/, auto /*last*/) {
+        ++count;
+    });
+    REQUIRE(count == 0);
+
+    std::string strs[] = {
+        "A  very \t\t long    string   with \t some,   delimiters",
+        "?  A  very \t\t long    string   with \t some,   delimiters",
+        "?  A  very \t\t long    string   with \t some,   delimiters!  \r\n"
+    };
+
+    for (auto it = std::begin(strs); it != std::end(strs); ++it)
+    {
+        count = 0;
+        stdx::split(it->begin(), it->end(), predicate, [&count](auto first, auto last) {
+            std::string  tmp(first, last);
+            switch (count) {
+            case 0:
+                REQUIRE(tmp == "A"); break;
+            case 1:
+                REQUIRE(tmp == "very"); break;
+            case 2:
+                REQUIRE(tmp == "long"); break;
+            case 3:
+                REQUIRE(tmp == "string"); break;
+            case 4:
+                REQUIRE(tmp == "with"); break;
+            case 5:
+                REQUIRE(tmp == "some"); break;
+            case 6:
+                REQUIRE(tmp == "delimiters"); break;
+            }
+            ++count;
+        });
+        REQUIRE(count == 7);
+    }
+}
+
+TEST_CASE("algorithms/split_copy", "[algorithm.experimental]")
+{
+    using namespace std;
+    static const auto predicate = [](char c) { return (std::isspace(c) || std::ispunct(c)); };
+    string str;
+    vector<string> expected;
+    vector<string> results;
+
+    stdx::split_copy(str, back_inserter(results), predicate);
+    REQUIRE(results == expected);
+
+    str = "?!,... ;:[]{\t}<>/\\^%$##@@)(  \r\n\r\n  /).\"''|*-%    ";
+    stdx::split_copy(str, back_inserter(results), predicate);
+    REQUIRE(results == expected);
+
+    str = "?  A  very \t\t long    string   with \t some,   delimiters!   \r\n";
+    expected = { "A", "very", "long", "string", "with", "some", "delimiters" };
+
+    stdx::split_copy(str, back_inserter(results), predicate);
+    REQUIRE(results == expected);
+}
 
 TEST_CASE("algorithms/regex_split", "[algorithm.experimental]")
 {

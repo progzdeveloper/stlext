@@ -34,7 +34,8 @@
 #include "ext/slide.hpp"
 #include "ext/gather.hpp"
 #include "ext/is_unique.hpp"
-
+#include "ext/distances.hpp"
+#include "ext/simplify.hpp"
 
 #include "ext/stralgo.hpp"
 #include "ext/split.hpp"
