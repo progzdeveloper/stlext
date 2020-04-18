@@ -38,8 +38,8 @@
 _STDX_BEGIN
 
 /*!
- * \brief simplify simplifies input range by removing consequentive elements that satisfy the
- * predicated and replace them by a single replacement element
+ * \brief simplify simplifies input range by removing consecutive elements that satisfy
+ * the predicate and replace them by a single replacement element
  * \tparam _BiIt models bidirectional iterator
  * \tparam _OutIt models output iterator
  * \tparam _Pred models unary predicate
