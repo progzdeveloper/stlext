@@ -40,6 +40,7 @@ SOURCES += \
     iterator/iterators.cpp \
     main.cpp \
     containers/lru_cache.cpp \
-    containers/span.cpp
+    containers/span.cpp \
+    range/interval.cpp
 
 

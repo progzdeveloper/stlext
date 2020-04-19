@@ -20,6 +20,9 @@ HEADERS += \
     algorithm/ext/regex_split.hpp \
     algorithm/ext/slide.hpp \
     algorithm/ext/split.hpp \
+    algorithm/ext/stralgo.hpp \
+    algorithm/ext/simplify.hpp \
+    algorithm/ext/distances.hpp \
     algorithm/searching/exponential_search.hpp \
     algorithm/searching.h \
     algorithm/searching/interpolation_search.hpp \
@@ -97,6 +100,7 @@ HEADERS += \
     cui/progress_viewer.hpp \
     cui/progress_watcher.hpp \
     cui/prompt.hpp \
+    cui/termcolor.hpp \
     functional/benchmark.hpp \
     functional/bit_andnot.hpp \
     functional/function_traits.hpp \
@@ -116,11 +120,13 @@ HEADERS += \
     iostreams/ratio.hpp \
     iostreams/timestamp.hpp \
     iostreams/utility.hpp \
+    iostreams/codecs_alpha.hpp \
     iterator/any_iterator.hpp \
     iterator/circular_iterator.hpp \
     iterator/istring_iterator.hpp \
     iterator/numeric_iterator.hpp \
     iterator/uinserter.hpp \
+    iterator/enumeration.hpp \
     mathext/constants.hpp \
     mathext/fuzzy_compare.hpp \
     mathext/mathext.hpp \
@@ -145,7 +151,7 @@ HEADERS += \
     platform/version.h \
     range/iter_range.hpp \
     range/range_algo.hpp \
-    range/value_range.h \
+    range/interval.hpp \
     stltraits/stdxfwd.hpp \
     stltraits/stlfwd.hpp \
     stltraits/stltraits.hpp \
@@ -156,13 +162,5 @@ HEADERS += \
     tuple/tuple_foreach.hpp \
     tuple/tupleio.hpp \
     tuple/tuple_transform.hpp \
-    tuple/tuple_utils.hpp \
-    cui/termcolor.hpp \
-    algorithm/ext/stralgo.hpp \
-    algorithm/ext/simplify.hpp \
-    iterator/enumeration.hpp \
-    iostreams/codecs_alpha.hpp \
-    algorithm/ext/distances.hpp
-
-
+    tuple/tuple_utils.hpp
 
