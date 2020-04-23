@@ -45,12 +45,6 @@ HEADERS += \
     allocators/memory_storage.hpp \
     allocators/ordered_arena.hpp \
     allocators/pooled_object.hpp \
-    bfc/basic_bloom_filter.h \
-    bfc/bfcfwd.h \
-    bfc/bloom_filter.h \
-    bfc/compressed_bloom_filter.h \
-    bfc/counting_bloom_filter.h \
-    bfc/scalable_bloom_filter.h \
     bitvector/bit_iterator.hpp \
     bitvector/bit_storage.hpp \
     bitvector/bit_traits.hpp \
@@ -162,5 +156,11 @@ HEADERS += \
     tuple/tuple_foreach.hpp \
     tuple/tupleio.hpp \
     tuple/tuple_transform.hpp \
-    tuple/tuple_utils.hpp
+    tuple/tuple_utils.hpp \
+    bfc/bloom_filter_interface.hpp \
+    bfc/basic_bloom_filter.hpp \
+    bfc/counting_bloom_filter.hpp \
+    bfc/scalable_bloom_filter.hpp \
+    bfc/compressed_bloom_filter.hpp \
+    bfc/bfc_utilities.h
 
