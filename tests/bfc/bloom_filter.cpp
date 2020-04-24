@@ -44,8 +44,16 @@ TEST_CASE("basic_bloom_filter/union", "[bfc/basic_bloom_filter]")
     REQUIRE(res.count("foo") == 1);
     REQUIRE(res.count("bar") == 1);
     REQUIRE(res.count("baz") == 1);
-    REQUIRE(res.count("c") == 0);
-    REQUIRE(res.count("0000") == 0);
+    REQUIRE(res.count("c") == 1);
+    REQUIRE(res.count("0000") == 1);
+
+    f2 |= f1;
+    REQUIRE(f2.all_of(std::begin(strs), std::end(strs)) == std::end(strs));
+    REQUIRE(f2.count("foo") == 1);
+    REQUIRE(f2.count("bar") == 1);
+    REQUIRE(f2.count("baz") == 1);
+    REQUIRE(f2.count("c") == 1);
+    REQUIRE(f2.count("0000") == 1);
 }
 
 
@@ -67,6 +75,11 @@ TEST_CASE("basic_bloom_filter/intersect", "[bfc/basic_bloom_filter]")
     REQUIRE(res.count("foo") == 1);
     REQUIRE(res.count("bar") == 1);
     REQUIRE(res.count("baz") == 0);
+
+    f2 &= f1;
+    REQUIRE(f2.count("foo") == 1);
+    REQUIRE(f2.count("bar") == 1);
+    REQUIRE(f2.count("baz") == 0);
 }
 
 

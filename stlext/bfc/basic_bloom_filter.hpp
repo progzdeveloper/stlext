@@ -103,20 +103,14 @@ public:
 
     basic_bloom_filter_impl& operator|=(const basic_bloom_filter_impl& other)
     {
-        // __stdx_assert(this->capacity() != other.capacity(), std::logic_error, "incompatible capacity");
-        if(this->capacity() != other.capacity())
-            throw std::logic_error("incompatible capacity");
-
+        __stdx_assert(this->capacity() == other.capacity(), std::logic_error);
         this->__m_storage |= other.__m_storage;
         return (*this);
     }
 
     basic_bloom_filter_impl& operator&=(const basic_bloom_filter_impl& other)
     {
-        // __stdx_assert(this->capacity() != other.capacity(), std::logic_error, "incompatible capacity");
-        if(this->capacity() != other.capacity())
-            throw std::logic_error("incompatible capacity");
-
+        __stdx_assert(this->capacity() != other.capacity(), std::logic_error);
         this->__m_storage &= other.__m_storage;
         return (*this);
     }
