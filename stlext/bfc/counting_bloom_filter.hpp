@@ -125,8 +125,8 @@ protected:
     {
         // 128b hash, [0] is the first half and [1] the second
         size_t hash_code[2];
-        hash_code[0] = __murmur(hash_val); // mix first half
-        hash_code[1] = __murmur(hash_code[0]); // mix second half
+        hash_code[0] = __murmur_mix(hash_val); // mix first half
+        hash_code[1] = __murmur_mix(hash_code[0]); // mix second half
 
         size_t w = this->__m_storage.size();
         for (size_t i = 0; i < this->__m_hash_count; i++) {
@@ -143,8 +143,8 @@ protected:
         size_t result = (std::numeric_limits<size_t>::max)();
         // 128b hash, [0] is the first half and [1] the second
         size_t hash_code[2];
-        hash_code[0] = __murmur(hash_val); // mix first half
-        hash_code[1] = __murmur(hash_code[0]); // mix second half
+        hash_code[0] = __murmur_mix(hash_val); // mix first half
+        hash_code[1] = __murmur_mix(hash_code[0]); // mix second half
 
         size_t w = this->__m_storage.size();
         for (size_t i = 0; i < this->__m_hash_count; i++) {
@@ -163,8 +163,8 @@ protected:
         size_t result = 0;
         // 128b hash, [0] is the first half and [1] the second
         size_t hash_code[2];
-        hash_code[0] = __murmur(hash_val); // mix first half
-        hash_code[1] = __murmur(hash_code[0]); // mix second half
+        hash_code[0] = __murmur_mix(hash_val); // mix first half
+        hash_code[1] = __murmur_mix(hash_code[0]); // mix second half
 
         size_t w = this->__m_storage.size();
         for (size_t i = 0; i < this->__m_hash_count; i++) {

@@ -110,7 +110,7 @@ static inline int __ifastrange(int word, int p) {
 }
 
 
-static inline uint32_t __murmur ( uint32_t h )
+static inline uint32_t __murmur_mix ( uint32_t h )
 {
     h ^= h >> 16;
     h *= UINT32_C(0x85ebca6b);
@@ -121,7 +121,7 @@ static inline uint32_t __murmur ( uint32_t h )
     return h;
 }
 
-static inline uint64_t __murmur ( uint64_t k )
+static inline uint64_t __murmur_mix ( uint64_t k )
 {
     k ^= k >> 33;
     k *= UINT64_C(0xff51afd7ed558ccd);
