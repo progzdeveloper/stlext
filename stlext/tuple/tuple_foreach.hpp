@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <tuple>
 #include "../platform/common.h"
 #include "../compability/integer_sequence"
 
@@ -36,21 +37,19 @@
 _STDX_BEGIN
 
 namespace detail {
-	/// FOR_EACH ELEMENT IMPLEMENTATION DETAILS
+    /// FOR_EACH ELEMENT IMPLEMENTATION DETAILS
 
-	template<class _Fn, class... _Args, size_t... _Idx>
-	inline void foreach_element(_Fn&& __act, const std::tuple<_Args...>& __args, stdx::index_sequence<_Idx...>) {
-		using namespace std;
-		int unused[] = { 0, ((void)forward<_Fn>(__act)(get<_Idx>(__args)), 0)... };
-		(void)unused;
-	}
+    template<class _Fn, class... _Args, size_t... _Idx>
+    inline void foreach_element(_Fn&& act, const std::tuple<_Args...>& args, std::index_sequence<_Idx...>) {
+        using namespace std;
+        initializer_list<int>{((void)forward<_Fn>(act)(get<_Idx>(args)), 0)...};
+    }
 
-	template<class _Fn, class... _Args, size_t... _Idx>
-	inline void foreach_element(_Fn&& __act, std::tuple<_Args...>& __args, stdx::index_sequence<_Idx...>) {
-		using namespace std;
-		int unused[] = { 0, ((void)forward<_Fn>(__act)(get<_Idx>(__args)), 0)... };
-		(void)unused;
-	}
+    template<class _Fn, class... _Args, size_t... _Idx>
+    inline void foreach_element(_Fn&& act, std::tuple<_Args...>& args, std::index_sequence<_Idx...>) {
+        using namespace std;
+        initializer_list<int>{((void)forward<_Fn>(act)(get<_Idx>(args)), 0)...};
+    }
 
 } // end namespace detail
 
@@ -58,12 +57,12 @@ namespace detail {
 
 template<class _Fn, class... _Args>
 inline void foreach_element(_Fn&& act, const std::tuple<_Args...>& args) {
-	detail::foreach_element(std::forward<_Fn>(act), args, stdx::make_index_sequence < sizeof...(_Args) > {});
+    detail::foreach_element(std::forward<_Fn>(act), args, std::make_index_sequence < sizeof...(_Args) > {});
 }
 
 template<class _Fn, class... _Args>
 inline void foreach_element(_Fn&& act, std::tuple<_Args...>& args) {
-	detail::foreach_element(std::forward<_Fn>(act), args, stdx::make_index_sequence < sizeof...(_Args) > {});
+    detail::foreach_element(std::forward<_Fn>(act), args, std::make_index_sequence < sizeof...(_Args) > {});
 }
 
 
@@ -71,7 +70,8 @@ inline void foreach_element(_Fn&& act, std::tuple<_Args...>& args) {
 
 template<class _Fn, class... _Args>
 inline void foreach_arg(_Fn&& act, _Args&&... args) {
-	foreach_element(std::forward<_Fn>(act), std::forward_as_tuple(args...));
+    using namespace std;
+    initializer_list<int>{((void)act(std::forward<_Args>(args)), 0)...};
 }
 
 

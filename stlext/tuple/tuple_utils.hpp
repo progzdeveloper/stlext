@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include <array>
 #include <tuple>
 #include <utility>
 #include <type_traits>
@@ -40,58 +41,42 @@
 
 _STDX_BEGIN
 
-// Helper function for combining indiviual values of hashed elements
-template<typename T>
-inline void hash_combine(size_t& seed, const T& x) {
-	static constexpr size_t __ratio_seed = 0x9e3779b9;
-	// golden ratio based hash combine from BOOST
-	seed ^= std::hash<T> {}(x) +__ratio_seed + (seed << 6) + (seed >> 2);
-}
-
-
-struct hash_combiner
-{
-	static const size_t __hash_seed = 0xdeadbeaf;
-	
-	hash_combiner() :
-		seed(__hash_seed) {
-	}
-
-	hash_combiner(size_t s) : 
-		seed(s) {
-	}
-
-	template<typename T>
-	inline void operator()(size_t, const T& x) {
-		hash_combine(seed, x);
-	}
-
-	size_t seed;
-};
 
 
 /// TUPLE HASHING
 
-template<typename T>
-struct tuple_hash :
-	public std::hash<T>
-{
-	inline result_type operator()(const argument_type& arg) const {
-		return std::hash<T>::operator()(arg);
-	}
-};
+template<class Tuple>
+struct tuple_hash;
 
 
-template<typename... _Args>
+template<class... _Args>
 struct tuple_hash< std::tuple<_Args...> > :
-	hash_combiner,
-	std::unary_function<std::tuple<_Args...>, size_t>
+        public std::hash<_Args>...
 {
-	inline result_type operator()(const argument_type& arg) const {
-		seed = __hash_seed;
-		::stdx::foreach_element(static_cast<const hash_combiner&>(*this), arg);
-		return seed;
-	}
+    typedef tuple_hash< std::tuple<_Args...> > this_type;
+    typedef size_t               result_type;
+    typedef std::tuple<_Args...> argument_type;
+
+    inline result_type operator()(const argument_type& arg) const {
+        size_t seed = 0xdeadbeaf;
+        foreach_element([this, &seed](auto x) { seed = this_type::__hash_combine(seed, this->__hash_code(x)); }, arg);
+        return seed;
+    }
+
+private:
+    template<class T>
+    inline size_t __hash_code(const T& x) const {
+        return static_cast<const std::hash<T>&>(*this)(x);
+    }
+
+    // Helper function for combining indiviual values of hashed elements
+    static inline size_t __hash_combine(size_t seed, size_t hs) {
+        static constexpr size_t __ratio_seed = 0x9e3779b9;
+        // golden ratio based hash combine from BOOST
+        seed ^= hs +__ratio_seed + (seed << 6) + (seed >> 2);
+        return seed;
+    }
+
 };
 
 
@@ -100,116 +85,119 @@ struct tuple_hash< std::tuple<_Args...> > :
 /// TUPLE ELEMENT-WISE SELECTING
 
 template<
-	size_t _Idx, 
-	typename _Tuple = void
+    size_t _Idx,
+    typename _Tuple = void
 >
-struct tuple_selector :
-	std::unary_function<_Tuple, typename std::tuple_element<_Idx, _Tuple>::type >
+struct select_ith :
+        std::unary_function<_Tuple, typename std::tuple_element<_Idx, _Tuple>::type >
 {
-	inline result_type operator()(const argument_type& x) {
-		return std::get<_Idx>(x);
-	}
+    typedef std::unary_function<_Tuple, typename std::tuple_element<_Idx, _Tuple>::type > base_type;
+    typedef typename base_type::argument_type argument_type;
+    typedef typename base_type::result_type result_type;
+    inline result_type operator()(const argument_type& x) {
+        return std::get<_Idx>(x);
+    }
 };
 
 template<size_t _Idx>
-struct tuple_selector<_Idx, void>
+struct select_ith<_Idx, void>
 {
-	template<typename _Tuple>
-	inline typename std::tuple_element<_Idx, _Tuple >::type&
-		operator()(const _Tuple& x) {
-		return std::get<_Idx>(x);
-	}
+    template<typename _Tuple>
+    inline auto operator()(_Tuple&& x)
+        -> decltype(std::get<_Idx>(std::forward<_Tuple>(x)))
+    {
+        return std::get<_Idx>(std::forward<_Tuple>(x));
+    }
 };
 
 
 /// TUPLE ELEMENT-WISE COMPARING
 
 template<
-	size_t I,
-	class _Pred = std::less<void>
+    size_t _I, //size_t _J = _I,
+    class _Pred = std::less<void>
 >
-struct nthcomparer :
-	public _Pred
+struct nth_comparer : public _Pred
 {
-	typedef bool result_type;
+    typedef bool result_type;
 
 
-	template<typename... _Args>
-	nthcomparer(_Args&&... __args) : _Pred(std::forward<_Args>(__args)...) {}
+    template<class... _Args>
+    nth_comparer(_Args&&... __args) : _Pred(std::forward<_Args>(__args)...) {}
 
-#if 0
-	template<class T>
-	inline bool operator()(const T& __x, const T& __y) const {
-		using namespace std;
-		return _Pred::operator()(get<I>(__x), get<I>(__y));
-	}
-#endif
-
-	template<class... _Args>
-	inline bool operator()(const std::tuple<_Args...>& __x, 
-						   const std::tuple<_Args...>& __y) const
-	{
-		using namespace std;
-		static const size_t SIZE = tuple_size<tuple<_Args...> >::value;
-		static_assert(I < SIZE, "I out of range");
-		return _Pred::operator()(get<I>(__x), get<I>(__y));
-	}
+    template<class... _Args>
+    inline bool operator()(const std::tuple<_Args...>& __x,
+                           const std::tuple<_Args...>& __y) const
+    {
+        using namespace std;
+        static const size_t SIZE = tuple_size<tuple<_Args...> >::value;
+        static_assert(_I < SIZE, "I out of range");
+        return _Pred::operator()(get<_I>(__x), get<_I>(__y));
+    }
 
 
-	template<class _First, class _Second>
-	inline bool operator()(const std::pair<_First, _Second>& __x, 
-						   const std::pair<_First, _Second>& __y) const {
-		using namespace std;
-		static_assert(I < 2, "I out of range");
-		return _Pred::operator()(get<I>(__x), get<I>(__y));
-	}
+    template<class _First, class _Second>
+    inline bool operator()(const std::pair<_First, _Second>& __x,
+                           const std::pair<_First, _Second>& __y) const {
+        using namespace std;
+        static_assert(_I < 2, "I out of range");
+        return _Pred::operator()(get<_I>(__x), get<_I>(__y));
+    }
+
+    template<class _Tp, size_t _Size>
+    inline bool operator()(const std::array<_Tp, _Size>& __x,
+                           const std::array<_Tp, _Size>& __y) const {
+        using namespace std;
+        static_assert(_I < _Size, "I out of range");
+        return _Pred::operator()(get<_I>(__x), get<_I>(__y));
+    }
 
 };
 
 #if 0
 
-	/// GET FUNCTIONS FOR std::complex<T>
+/// GET FUNCTIONS FOR std::complex<T>
 template<size_t I, class T, size_t N>
 T& get(T(&_Arr)[N])
 {	// return element at I in array _Arr
-	static_assert(I < N, "array index out of bounds");
-	return (_Arr[I]);
+    static_assert(I < N, "array index out of bounds");
+    return (_Arr[I]);
 }
 
 template<size_t I, class T, size_t N>
 const T& get(const T(&_Arr)[N])
 {	// return element at I in array _Arr
-	static_assert(I < N, "array index out of bounds");
-	return (_Arr[I]);
+    static_assert(I < N, "array index out of bounds");
+    return (_Arr[I]);
 }
 
 template<size_t I, class T, size_t N>
 T&& get(T(&&_Arr)[N])
 {	// return element at I in array _Arr
-	static_assert(I < N, "array index out of bounds");
-	return (std::move(_Arr[I]));
+    static_assert(I < N, "array index out of bounds");
+    return (std::move(_Arr[I]));
 }
 
 
 template<size_t I, class T>
 T& get(std::complex<T>& c) {
-	static_assert(I < 2, "index out of bounds");
-	typedef  T(&_Arr)[2];
-	return get<I>(reinterpret_cast<_Arr&>(c));
+    static_assert(I < 2, "index out of bounds");
+    typedef  T(&_Arr)[2];
+    return get<I>(reinterpret_cast<_Arr&>(c));
 }
 
 template<size_t I, class T>
 const T& get(const std::complex<T>& c) {
-	static_assert(I < 2, "index out of bounds");
-	typedef  T(&_Arr)[2];
-	return get<I>(reinterpret_cast<const _Arr&>(c));
+    static_assert(I < 2, "index out of bounds");
+    typedef  T(&_Arr)[2];
+    return get<I>(reinterpret_cast<const _Arr&>(c));
 }
 
 template<size_t I, class T>
 T&& get(std::complex<T>&& c) {
-	static_assert(I < 2, "array index out of bounds");
-	typedef T(&&_Arr)[2];
-	return get<I>(reinterpret_cast<_Arr&&>(c));
+    static_assert(I < 2, "array index out of bounds");
+    typedef T(&&_Arr)[2];
+    return get<I>(reinterpret_cast<_Arr&&>(c));
 }
 #endif
 

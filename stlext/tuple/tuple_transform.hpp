@@ -35,42 +35,42 @@
 _STDX_BEGIN
 
 namespace detail {
-	/// TRANSFORM IMPLEMENTATION DETAILS
+    /// TRANSFORM IMPLEMENTATION DETAILS
 
-	struct element_assigner {
-		template<class T, class R, class _Act>
-		inline void operator()(const T& x, R&& r, _Act&& op) {
-			r = op(x);
-		}
+    struct element_assigner {
+        template<class T, class R, class _Act>
+        inline void operator()(const T& x, R&& r, _Act&& op) {
+            r = op(x);
+        }
 
-		template<class T, class R, class _Act>
-		inline void operator()(const T& x, const T& y, R&& r, _Act&& op) {
-			r = op(x, y);
-		}
-	};
-
-
-	template<class _Action, class... _Src, class... _Dst, size_t... _Idx>
-	inline void tuple_transform1(_Action&& act,
-								 const std::tuple<_Src...>& src,
-								 std::tuple<_Dst...>& dst,
-								 std::index_sequence<_Idx...>)
-	{
-		using std::get;
-		int unused[] = { 0, ((void)element_assigner{}(get<_Idx>(src), get<_Idx>(dst), act), 0)... };
-		(void)unused;
-	}
+        template<class T, class R, class _Act>
+        inline void operator()(const T& x, const T& y, R&& r, _Act&& op) {
+            r = op(x, y);
+        }
+    };
 
 
-	template<class _Action, class... _Src, class... _Dst, size_t... _Idx>
-	inline void tuple_transform2(_Action&& act,
-								 const std::tuple<_Src...>& lhs, const std::tuple<_Src...>& rhs,
-								 std::tuple<_Dst...>& dst, std::index_sequence<_Idx...>)
-	{
-		using std::get;
-		int unused[] = { 0, ((void)element_assigner{}(get<_Idx>(lhs), get<_Idx>(rhs), get<_Idx>(dst), act), 0)... };
-		(void)unused;
-	}
+    template<class _Action, class... _Src, class... _Dst, size_t... _Idx>
+    inline void tuple_transform1(_Action&& act,
+                                 const std::tuple<_Src...>& src,
+                                 std::tuple<_Dst...>& dst,
+                                 std::index_sequence<_Idx...>)
+    {
+        using std::get;
+        int unused[] = { 0, ((void)element_assigner{}(get<_Idx>(src), get<_Idx>(dst), act), 0)... };
+        (void)unused;
+    }
+
+
+    template<class _Action, class... _Src, class... _Dst, size_t... _Idx>
+    inline void tuple_transform2(_Action&& act,
+                                 const std::tuple<_Src...>& lhs, const std::tuple<_Src...>& rhs,
+                                 std::tuple<_Dst...>& dst, std::index_sequence<_Idx...>)
+    {
+        using std::get;
+        int unused[] = { 0, ((void)element_assigner{}(get<_Idx>(lhs), get<_Idx>(rhs), get<_Idx>(dst), act), 0)... };
+        (void)unused;
+    }
 
 
 } // end namespace detail
@@ -81,16 +81,16 @@ namespace detail {
 template<class _Action, class... _Src, class... _Dst>
 void tuple_transform(const std::tuple<_Src...>& src, std::tuple<_Dst...>& dst, _Action&& act)
 {
-	static_assert(sizeof...(_Src) == sizeof...(_Dst), "tuple size mismatch");
-	detail::tuple_transform1(act, src, dst, std::make_index_sequence < sizeof...(_Src) > {});
+    static_assert(sizeof...(_Src) == sizeof...(_Dst), "tuple size mismatch");
+    detail::tuple_transform1(act, src, dst, std::make_index_sequence < sizeof...(_Src) > {});
 }
 
 
 template<class _Act, class... _Src, class... _Dst>
 void tuple_transform(const std::tuple<_Src...>& __lhs, const std::tuple<_Dst...>& __rhs, std::tuple<_Dst...>& __dst, _Act&& __act)
 {
-	static_assert(sizeof...(_Src) == sizeof...(_Dst), "tuple size mismatch");
-	detail::tuple_transform2(__act, __lhs, __rhs, __dst, std::make_index_sequence < sizeof...(_Src) > {});
+    static_assert(sizeof...(_Src) == sizeof...(_Dst), "tuple size mismatch");
+    detail::tuple_transform2(__act, __lhs, __rhs, __dst, std::make_index_sequence < sizeof...(_Src) > {});
 }
 
 

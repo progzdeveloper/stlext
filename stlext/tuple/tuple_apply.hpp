@@ -38,88 +38,96 @@
 _STDX_BEGIN
 
 namespace detail {
+
 	/// APPLY FUNCTION IMPLEMENTATION DETAILS
 
-#if (defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800)
-	template<typename _Fn, typename _Tuple, std::size_t... _Idx>
-	inline auto apply_impl(_Fn&& target, _Tuple&& args, std::index_sequence < _Idx... >)
-		-> decltype(invoke(std::forward<_Fn>(target), std::get<_Idx>(std::forward<_Tuple>(args))...))
-	{
-		using namespace std;
-		return stdx::invoke(forward<_Fn>(target), get<_Idx>(forward<_Tuple>(args))...);
-	}
+#if (defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800) || \
+    (defined(STDX_CMPLR_GNU) && (STDX_CMPLR_GNU < 500)) || \
+    (defined(STDX_CMPLR_INTEL) && STDX_CMPLR_INTEL <= 1800)
+
+
+    template<class _Fn, class _Tuple, std::size_t... _Idx>
+    inline constexpr auto apply_impl(_Fn&& target, _Tuple&& args, stdx::index_sequence<_Idx...>)
+            -> decltype(stdx::invoke(std::forward<_Fn>(target), std::get<_Idx>(std::forward<_Tuple>(args))...))
+    {
+        using std::get;
+        using std::forward;
+        return stdx::invoke(forward<_Fn>(target), get<_Idx>(forward<_Tuple>(args))...);
+    }
+
+    template<class _Fn, class _Tuple, std::size_t... _Idx>
+    inline constexpr auto apply_impl(_Fn target, const _Tuple& args, stdx::index_sequence<_Idx...>)
+            -> decltype(stdx::invoke(target, std::get<_Idx>(args)...))
+    {
+        using std::get;
+        return stdx::invoke(target, get<_Idx>(args)...);
+    }
+
 #else
 
-	template<class _Fn, class _Tuple, std::size_t... _Idx>
-	inline constexpr auto apply_impl(_Fn&& target, _Tuple&& args, stdx::index_sequence<_Idx...>) 
-		-> decltype(stdx::invoke(std::forward<_Fn>(target), std::get<_Idx>(std::forward<_Tuple>(args))...))
-	{
-		using std::get;
-		using std::forward;
-		return stdx::invoke(forward<_Fn>(target), get<_Idx>(forward<_Tuple>(args))...);
-	}
-
-	template<class _Fn, class _Tuple, std::size_t... _Idx>
-	inline constexpr auto apply_impl(_Fn target, const _Tuple& args, stdx::index_sequence<_Idx...>)
-		-> decltype(stdx::invoke(target, std::get<_Idx>(args)...))
-	{
-		using std::get;
-		return stdx::invoke(target, get<_Idx>(args)...);
-	}
-
-
+    template<typename _Fn, typename _Tuple, std::size_t... _Idx>
+    inline auto apply_impl(_Fn&& target, _Tuple&& args, std::index_sequence < _Idx... >)
+            -> decltype(stdx::invoke(std::forward<_Fn>(target), std::get<_Idx>(std::forward<_Tuple>(args))...))
+    {
+        using namespace std;
+        return stdx::invoke(forward<_Fn>(target), get<_Idx>(forward<_Tuple>(args))...);
+    }
 
 #endif
+
 } // end namespace detail
 
 
 /// APPLY TUPLE AS FUNCTION ARGS
 
 /// C++17 proposal
-#if (defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800)
+#if (defined(STDX_CMPLR_MSVC) && STDX_CMPLR_MSVC <= 1800) || \
+    (defined(STDX_CMPLR_GNU) && (STDX_CMPLR_GNU < 500)) || \
+    (defined(STDX_CMPLR_INTEL) && STDX_CMPLR_INTEL <= 1800)
 
 template<typename _Fn, typename... _Args>
-inline auto apply(_Fn&& target, std::tuple<_Args...>&& args)
--> decltype(detail::apply_impl(std::forward<_Fn>(target), std::forward< std::tuple<_Args...> >(args), std::index_sequence_for<_Args...>{}))
+inline constexpr auto apply(_Fn&& target, std::tuple<_Args...>&& args)
+    -> decltype(detail::apply_impl(std::forward<_Fn>(target), std::forward< std::tuple<_Args...> >(args), stdx::index_sequence_for<_Args...>{}))
 {
-	using namespace std;
-	typedef std::tuple<_Args...> tuple_t;
-	using _Indices = make_index_sequence<tuple_size<tuple_t>::value>;
-	return detail::apply_impl(forward<_Fn>(target), forward<tuple_t>(args), _Indices{});
-}
-
-
-template<typename _Fn, typename... _Args>
-inline auto apply(_Fn&& target, const std::tuple<_Args...>& args)
--> decltype(detail::apply_impl(std::forward<_Fn>(target), args, std::index_sequence_for<_Args...>{}))
-{
-	using namespace std;
-	typedef std::tuple<_Args...> tuple_t;
-	using _Indices = make_index_sequence<tuple_size<tuple_t>::value>;
-	return detail::apply_impl(target, args, _Indices{});
-}
-
-#else
-
-template<typename _Fn, typename... _Args>
-inline constexpr auto apply(_Fn&& target, std::tuple<_Args...>&& args) 
--> decltype(detail::apply_impl(std::forward<_Fn>(target), std::forward< std::tuple<_Args...> >(args), stdx::index_sequence_for<_Args...>{}))
-{
-	using namespace std;
-	typedef std::tuple<_Args...> tuple_t;
-	using _Indices = stdx::make_index_sequence<tuple_size<tuple_t>::value>;
-	return detail::apply_impl(forward<_Fn>(target), forward<tuple_t>(args), _Indices{});
+    using namespace std;
+    typedef std::tuple<_Args...> tuple_t;
+    using _Indices = stdx::make_index_sequence<tuple_size<tuple_t>::value>;
+    return detail::apply_impl(forward<_Fn>(target), forward<tuple_t>(args), _Indices{});
 }
 
 
 template<class _Fn, class... _Args>
 inline constexpr auto apply(_Fn target, const std::tuple<_Args...>& args)
--> decltype(detail::apply_impl(std::forward<_Fn>(target), args, stdx::index_sequence_for<_Args...>{}))
+    -> decltype(detail::apply_impl(std::forward<_Fn>(target), args, stdx::index_sequence_for<_Args...>{}))
 {
-	using namespace std;
-	typedef std::tuple<_Args...> tuple_t;
-	using _Indices = stdx::make_index_sequence<tuple_size<tuple_t>::value>;
-	return detail::apply_impl(target, args, _Indices{});
+    using namespace std;
+    typedef std::tuple<_Args...> tuple_t;
+    using _Indices = stdx::make_index_sequence<tuple_size<tuple_t>::value>;
+    return detail::apply_impl(target, args, _Indices{});
+}
+
+
+#else
+
+template<typename _Fn, typename... _Args>
+inline auto apply(_Fn&& target, std::tuple<_Args...>&& args)
+    -> decltype(detail::apply_impl(std::forward<_Fn>(target), std::forward< std::tuple<_Args...> >(args), std::index_sequence_for<_Args...>{}))
+{
+    using namespace std;
+    typedef std::tuple<_Args...> tuple_t;
+    using _Indices = make_index_sequence<tuple_size<tuple_t>::value>;
+    return detail::apply_impl(forward<_Fn>(target), forward<tuple_t>(args), _Indices{});
+}
+
+
+template<typename _Fn, typename... _Args>
+inline auto apply(_Fn&& target, const std::tuple<_Args...>& args)
+    -> decltype(detail::apply_impl(std::forward<_Fn>(target), args, std::index_sequence_for<_Args...>{}))
+{
+    using namespace std;
+    typedef std::tuple<_Args...> tuple_t;
+    using _Indices = make_index_sequence<tuple_size<tuple_t>::value>;
+    return detail::apply_impl(target, args, _Indices{});
 }
 
 #endif

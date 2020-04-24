@@ -42,6 +42,7 @@ SOURCES += \
     containers/lru_cache.cpp \
     containers/span.cpp \
     range/interval.cpp \
-    bfc/bloom_filter.cpp
+    bfc/bloom_filter.cpp \
+    tuple/tuple_algo.cpp
 
 
