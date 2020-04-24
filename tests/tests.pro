@@ -41,6 +41,7 @@ SOURCES += \
     main.cpp \
     containers/lru_cache.cpp \
     containers/span.cpp \
-    range/interval.cpp
+    range/interval.cpp \
+    bfc/bloom_filter.cpp
 
 

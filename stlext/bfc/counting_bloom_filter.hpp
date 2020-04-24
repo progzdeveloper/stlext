@@ -31,6 +31,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <algorithm>
 
 #include "bloom_filter_interface.hpp"
 #include "bfc_utilities.h"
@@ -66,7 +67,7 @@ public:
 
     counting_bloom_filter_impl(double fp, size_t capacity)
     {
-        size_t optimal_capacity = base_type::m(fp, capacity);
+        size_t optimal_capacity = (std::max)(base_type::m(fp, capacity), capacity);
         size_t optimal_hashes = base_type::k(optimal_capacity, capacity);
         //optimal_capacity += optimal_hashes - optimal_capacity % optimal_hashes;
         this->__m_hash_count = optimal_hashes;
@@ -139,7 +140,7 @@ protected:
 
     size_t count(size_t hash_val) const
     {
-        size_t result = 0;
+        size_t result = (std::numeric_limits<size_t>::max)();
         // 128b hash, [0] is the first half and [1] the second
         size_t hash_code[2];
         hash_code[0] = __murmur(hash_val); // mix first half
@@ -170,11 +171,11 @@ protected:
             // use hash_code[0] as an accumulator, each different hash is computed as
             // (hash_code[0] + (i+1) * hash_code[1]) % __m_width
             hash_code[0] += hash_code[1];
-            auto value = this->__m_storage[hash_code[0] % w];
+            size_t value = this->__m_storage[__fastrange(hash_code[0], w)];
             if (value > 0) {
-                result = min(value, result);
+                result = (std::min)(value, result);
                 --value;
-                this->__m_storage[hash_code[0] % w] = value;
+                this->__m_storage[__fastrange(hash_code[0], w)] = value;
             }
         }
         size_t n = static_cast<size_t>((result > 0));

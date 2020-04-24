@@ -159,33 +159,42 @@ protected:
 };
 
 
-template<
-    class _Key,
-    class _Hasher = std::hash<_Key>
->
-basic_bloom_filter_impl<_Key, _Hasher> operator| (const basic_bloom_filter_impl<_Key, _Hasher>& lhs,
-                                                  const basic_bloom_filter_impl<_Key, _Hasher>& rhs) {
-    basic_bloom_filter_impl<_Key, _Hasher> result(lhs);
-    return (result |= rhs);
-}
-
-template<
-    class _Key,
-    class _Hasher = std::hash<_Key>
->
-basic_bloom_filter_impl<_Key, _Hasher> operator& (const basic_bloom_filter_impl<_Key, _Hasher>& lhs,
-                                                  const basic_bloom_filter_impl<_Key, _Hasher>& rhs) {
-    basic_bloom_filter_impl<_Key, _Hasher> result(lhs);
-    return (result &= rhs);
-}
-
 
 template<
     class _Key,
     class _Hasher = std::hash<_Key>,
-    class _Storage = std::vector<bool>
+    class _Storage = stdx::bitvector<>
 >
 using basic_bloom_filter = bloom_filter_interface< basic_bloom_filter_impl<_Key, _Hasher, _Storage> >;
+
+
+
+template<
+    class _Key,
+    class _Hasher,
+    class _Storage
+>
+basic_bloom_filter<_Key, _Hasher, _Storage>
+    operator| (const basic_bloom_filter<_Key, _Hasher, _Storage>& lhs,
+               const basic_bloom_filter<_Key, _Hasher, _Storage>& rhs) {
+    basic_bloom_filter<_Key, _Hasher, _Storage> result(lhs);
+    result |= rhs;
+    return result;
+}
+
+template<
+    class _Key,
+    class _Hasher,
+    class _Storage
+>
+basic_bloom_filter<_Key, _Hasher, _Storage>
+    operator& (const basic_bloom_filter<_Key, _Hasher, _Storage>& lhs,
+               const basic_bloom_filter<_Key, _Hasher, _Storage>& rhs) {
+    basic_bloom_filter<_Key, _Hasher> result(lhs);
+    result &= rhs;
+    return result;
+}
+
 
 _STDX_END
 

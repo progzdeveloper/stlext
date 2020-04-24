@@ -79,7 +79,7 @@ public:
 
 	inline const_reference operator*() const { return __m_val; }
 
-    inline const_pointer operator->() const { return (&__m_val); }
+    inline pointer operator->() { return (&__m_val); }
 
 	inline const_reference operator[] (difference_type offset) const {
 		return (__m_val + offset * _Stride);
@@ -211,7 +211,7 @@ public:
 
 	inline const_reference operator*() const { return __m_val; }
 
-    inline const_pointer operator->() const { return (&__m_val); }
+    inline pointer operator->() const { return (&__m_val); }
 
 
 	inline numeric_iterator operator+ (difference_type offset) const {
@@ -338,7 +338,7 @@ public:
 
 	inline const_reference operator*() const { return __m_val; }
 
-    inline const_pointer operator->() const { return (&__m_val); }
+    inline pointer operator->() { return (&__m_val); }
 
 	inline const_reference operator[] (difference_type offset) const {
 		return (__m_val + offset * __m_step);
