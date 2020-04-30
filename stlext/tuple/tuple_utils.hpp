@@ -71,12 +71,11 @@ private:
 
     // Helper function for combining indiviual values of hashed elements
     static inline size_t __hash_combine(size_t seed, size_t hs) {
-        static constexpr size_t __ratio_seed = 0x9e3779b9;
+        static constexpr size_t __ratio_seed = (sizeof(size_t) < 8 ? 0x9e3779b9 : 0xc6a4a7935bd1e995);
         // golden ratio based hash combine from BOOST
         seed ^= hs +__ratio_seed + (seed << 6) + (seed >> 2);
         return seed;
     }
-
 };
 
 
