@@ -39,7 +39,7 @@
 _STDX_BEGIN
 
 /*!
- * \fn exponential_search(_FwdIt first, _FwdIt last, const _Key& key, _Comp comp)
+ * \fn exponential_search(_RandIt first, _RandIt last, const _Key& key, _Comp comp)
  * \brief Find an element equivalent to value appears within the range [first, last)
  * using exponential search.
  *
@@ -51,11 +51,11 @@ _STDX_BEGIN
  * A fully-sorted range meets this criterion.
  *
  * Type requirements
- * - _FwdIt must meet the requirements of LegacyForwardIterator.
- * - _Comp  must meet the requirements of BinaryPredicate. It is not required to
+ * - _RandIt must meet the requirements of LegacyRandomAccessIterator.
+ * - _Comp   must meet the requirements of BinaryPredicate. It is not required to
  * satisfy Compare
  *
- * \tparam _FwdIt  models forward iterator
+ * \tparam _FwdIt  models random access iterator
  * \tparam _Key    models element type
  * \tparam _Comp   models binary comparator
  *
@@ -76,36 +76,35 @@ _STDX_BEGIN
  * Worst case: O(log i) time, where i is the index where the search key would be
  * in the sequence.
  */
-template<class _FwdIt, class _Key, class _Comp>
-_FwdIt exponential_search(_FwdIt first, _FwdIt last, const _Key& key, _Comp comp)
+template<class _RandIt, class _Key, class _Comp>
+_RandIt exponential_search(_RandIt first, _RandIt last, const _Key& key, _Comp comp)
 {
-    typedef typename std::iterator_traits<_FwdIt>::iterator_category category;
+    typedef typename std::iterator_traits<_RandIt>::iterator_category category;
     static_assert(!std::is_same<category, std::input_iterator_tag>::value,
                   "exponential_search() cannot be used with input iterators");
 
     if (first == last)
         return last; // nothing to search
 
+    size_t size = std::distance(first, last);
     size_t bound = 1; // as 2^0 = 1
-    _FwdIt curr = std::next(first);
-    while (bound < size) {
+    _RandIt curr = std::next(first);
+    for (; bound < size; ) {
         if(comp(*curr, key)) {
             first = curr;
-            std::advance(curr, bound);
+            std::advance(curr, (bound + 1) >> 1);
             bound <<= 1; // bound will increase as power of 2
         }
         else
             break; // when array[i] corsses the key element
     }
 
-    if (bound >= size) // if we out of range
-        curr = last; // correct upper bound
-
-    return std::lower_bound(first, curr, key, comp);
+    // correct upper bound if we out of range
+    return std::lower_bound(first, (bound >= size ? last : curr), key, comp);
 }
 
 /*!
- * \fn exponential_search(_FwdIt first, _FwdIt last, const _Key& key)
+ * \fn exponential_search(_RandIt first, _RandIt last, const _Key& key)
  * \brief Find a lower bound of key in a input sequence [first, last) using exponential search.
  *
  * Find an iterator pointing to the first element in the range [first, last)
@@ -113,8 +112,8 @@ _FwdIt exponential_search(_FwdIt first, _FwdIt last, const _Key& key, _Comp comp
  * The range [first, last) must be at least partially ordered, i.e. partitioned with
  * respect to the expression `element < value` or `comp(element, value)`.
  *
- * \tparam _FwdIt models forward iterator
- * \tparam _Key   models element type
+ * \tparam _RandIt models random access iterator
+ * \tparam _Key    models element type
  *
  * \param first The start of the input sequence
  * \param last  One past the end of the input sequence
