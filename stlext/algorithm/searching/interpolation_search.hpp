@@ -128,7 +128,7 @@ _It interpolation_search(_It first, _It last, const _Key& what, _Proj proj)
 * \return Iterator pointing to the first element that is not less than value,
 * or last if no such element is found.
 */
-template<class _RandIt, class _Key, class _Proj>
+template<class _RandIt, class _Key>
 _RandIt interpolation_search(_RandIt first, _RandIt last, const _Key& key)
 {
 	typedef typename std::iterator_traits<_RandIt>::value_type value_type;
