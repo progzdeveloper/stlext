@@ -37,11 +37,13 @@
 #include "version.h"  // library version stuff
 #include "compiler.h" // compiler detection
 
-#ifndef _DISABLE_EXCEPTIONS
+#ifndef _STLEXT_NO_EXCEPTIONS
 #include <stdexcept>
 #endif
 #ifdef STDX_CMPLR_MSVC
 #include <crtdbg.h>
+#else
+#include <signal.h>
 #endif
 
 
@@ -129,7 +131,9 @@ namespace detail
 				_CrtDbgBreak();
 #else
 			fputs(buffer, stderr);
-            abort();
+            // assumes POSIX-compatiable system
+            //abort(); do not aborting - signal to debugger instead
+            raise(SIGTRAP);
 #endif
 		}
 #if defined(STDX_CMPLR_MSVC) && defined(_STDX_DEBUG)
