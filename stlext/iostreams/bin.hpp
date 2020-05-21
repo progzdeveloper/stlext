@@ -81,21 +81,22 @@ namespace detail
 
 	// bitvector<> specialization
 	template<
-		typename _Word,
-		typename _Alloc
+        class _Word,
+        size_t _Opt,
+        class _Alloc
 	>
-	class binrep< stdx::bitvector<_Word, _Alloc> > 
+    class binrep< stdx::bitvector<_Word, _Opt, _Alloc> >
 	{
 	public:
-		typedef stdx::bitvector<_Word, _Alloc> value_type;
+        typedef stdx::bitvector<_Word, _Opt, _Alloc> argument_type;
 
-		binrep(const value_type& x, size_t radix, const char* delim) :
+        binrep(const argument_type& x, size_t radix, const char* delim) :
 			__m_val(x), __m_rdx(radix), __m_sep(delim) {
 		}
 
         template<typename _Elem, typename _Traits>
 		friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, 
-															  const binrep< stdx::bitvector<_Word, _Alloc> >& rep)
+                                                              const binrep<argument_type>& rep)
 		{
 			if (stream.flags() & std::ios::showbase) {
 				stream.put((_Elem)'b');
@@ -103,14 +104,14 @@ namespace detail
 
 			size_t n = rep.__m_val.size() - 1;
 			for (ptrdiff_t pos = n; pos >= 0; --pos) {
-                if (rep.__m_rdx && (pos != static_cast<ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
+                if (rep.__m_rdx && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
 					stream << rep.__m_sep;
 				stream << _Elem('0' + rep.__m_val.test(pos));
 			}
 			return (stream << std::flush);
 		}
 
-		const value_type& __m_val;
+        const argument_type& __m_val;
 		size_t __m_rdx;
 		const char* __m_sep;
 	};
@@ -121,15 +122,15 @@ namespace detail
 	class binrep < std::bitset<_Size> > 
 	{
 	public:
-		typedef std::bitset<_Size> value_type;
+        typedef std::bitset<_Size> argument_type;
 
-		binrep(const value_type& x, size_t radix, const char* delim) :
+        binrep(const argument_type& x, size_t radix, const char* delim) :
 			__m_val(x), __m_rdx(radix), __m_sep(delim) {
 		}
 
         template<typename _Elem, typename _Traits>
 		friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, 
-															  const binrep< std::bitset<_Size> >& rep)
+                                                              const binrep< argument_type >& rep)
 		{
 			if (stream.flags() & std::ios::showbase) {
 				stream.put((_Elem)'b');
@@ -137,14 +138,14 @@ namespace detail
 
 			size_t n = rep.__m_val.size() - 1;
 			for (ptrdiff_t pos = n; pos >= 0; --pos) {
-                if (rep.__m_rdx && (pos != static_cast<ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
+                if (rep.__m_rdx && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
 					stream << rep.__m_sep;
 				stream << _Elem('0' + rep.__m_val.test(pos));
 			}
 			return (stream << std::flush);
 		}
 
-		const value_type& __m_val;
+        const argument_type& __m_val;
 		size_t __m_rdx;
 		const char* __m_sep;
 	};
@@ -152,20 +153,22 @@ namespace detail
 } // end namespace detail
 
 
-template<typename T>
+template<class T>
 detail::binrep<T> bin(const T& x, size_t radix = 0, const char* delim = " ") {
 	static_assert(std::is_integral<T>::value, "T is not an integral type");
 	return detail::binrep<T>(x, radix, delim);
 }
 
-template<typename _Word, typename _Alloc>
-detail::binrep< stdx::bitvector<_Word, _Alloc> > bin(const stdx::bitvector<_Word, _Alloc>& x, size_t radix = 0, const char* delim = " ") {
-	typedef stdx::bitvector<_Word, _Alloc> value_type;
+template<class _Word, size_t _Opt, class _Alloc>
+detail::binrep< stdx::bitvector<_Word, _Opt, _Alloc> > bin(const stdx::bitvector<_Word, _Opt, _Alloc>& x,
+                                                           size_t radix = 0, const char* delim = " ") {
+    typedef stdx::bitvector<_Word, _Opt, _Alloc> value_type;
 	return detail::binrep<value_type>(x, radix, delim);
 }
 
 template<size_t _Size>
-detail::binrep< std::bitset<_Size> > bin(const std::bitset<_Size>& x, size_t radix = 0, const char* delim = " ") {
+detail::binrep< std::bitset<_Size> > bin(const std::bitset<_Size>& x,
+                                         size_t radix = 0, const char* delim = " ") {
 	typedef std::bitset<_Size> value_type;
 	return detail::binrep<value_type>(x, radix, delim);
 }

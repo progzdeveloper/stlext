@@ -1,16 +1,15 @@
 #include <iostream>
 #include <sstream>
+#include <bitset>
 #include <catch.hpp>
 
 #include <stlext/bitvector/bitvector.hpp>
 
 namespace detail 
 {
-	template<class _Word, class _Alloc>
-	std::string to_string(const stdx::bitvector<_Word, _Alloc>& bits) {
-		std::stringstream oss;
-		oss << bits;
-		return oss.str();
+    template<class _Word, size_t _Opt, class _Alloc>
+    std::string to_string(const stdx::bitvector<_Word, _Opt, _Alloc>& bits) {
+        return bits;
 	}
 
 	template<class _Word, bool C>
@@ -25,25 +24,25 @@ namespace detail
 
 TEST_CASE("bitvector/constructor", "[bitvector]")
 {
-	using namespace stdx;
+    using stdx::bitvector;
 	using ::detail::to_string;
 
 	typedef bitvector<> bitvec;
 	std::bitset<65> _bits("11010101010101010101111111111000000011101000111110011111010101111");
 	bitvec bits(_bits);
 
-	bitvec bits0;
+    bitvec bits0;
 	bitvec bits1(64);
-	bitvec bits2(128);
-	bitvec bits3 = bits;
-	bitvec bits4 = _bits;
+    /*bitvec bits2(128);*/
+    bitvec bits3 = bits;
+    bitvec bits4 = _bits;
 
 	REQUIRE(_bits.to_string() == to_string(bits));
-	REQUIRE(_bits.to_string() == to_string(bits3));
-	REQUIRE(_bits.to_string() == to_string(bits4));
+    REQUIRE(_bits.to_string() == to_string(bits3));
+    REQUIRE(_bits.to_string() == to_string(bits4));
 	REQUIRE(bits0.empty());
-	REQUIRE(bits1.size() == 64);
-	REQUIRE(bits2.blocks() == 2);
+    REQUIRE(bits1.size() == 64);
+    //REQUIRE(bits2.nblocks() == 2);
 }
 
 
@@ -52,7 +51,7 @@ TEST_CASE("bitvector/memory", "[bitvector]")
 	using ::detail::to_string;
 
 	typedef stdx::bitvector<uint64_t> bitvector_t;
-	static const size_t min_capacity = (sizeof(bitvector_t) * CHAR_BIT - CHAR_BIT);
+    //static const size_t min_capacity = (sizeof(bitvector_t) * CHAR_BIT - CHAR_BIT);
 
 	std::cout << "bitvector_t size: " << sizeof(bitvector_t) << " bytes" << std::endl;
 	
@@ -60,7 +59,7 @@ TEST_CASE("bitvector/memory", "[bitvector]")
 	std::bitset<96> _bits("011010010000001101100010100000000010011111100101110110110111010101100100100101011111110000010011");
 	bitvector_t bits(_bits), result(18, 0);
 
-	stdx::flip(bits.begin() + 7, bits.begin() + 25, result.begin());
+    stdx::flip_range(bits.begin() + 7, bits.begin() + 25, result.begin());
 	REQUIRE("101101010000000111" == to_string(result));
 
 	result.resize(bits.size());
@@ -74,71 +73,52 @@ TEST_CASE("bitvector/memory", "[bitvector]")
 	REQUIRE("1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
 				   == to_string(s1));
 
-	s1.resize(72, 1);
-	REQUIRE("111111111111111111111111111111111111111111111111111111111111111111111111" == to_string(s1));
-	REQUIRE(s1.capacity() > min_capacity);
 
-	s1.shrink();
-#ifdef STDX_PROCESSOR_X86_64
-	REQUIRE(s1.capacity() == min_capacity);
-#else
-	REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
-#endif
+    s1.resize(72, 1);
+    REQUIRE("111111111111111111111111111111111111111111111111111111111111111111111111" == to_string(s1));
 
-	s1.resize(24, 1);
-	REQUIRE("111111111111111111111111" == to_string(s1));
-	s1.shrink();
-#ifdef STDX_PROCESSOR_X86_64
-	REQUIRE(s1.capacity() == min_capacity);
-#else
-	REQUIRE(s1.capacity() == bitvector_t::bpw);
-#endif
+    s1.resize(24, 1);
+    REQUIRE("111111111111111111111111" == to_string(s1));
 
-	s1.resize(68, 1);
-	REQUIRE("11111111111111111111111111111111111111111111111111111111111111111111" == to_string(s1));
-#ifdef STDX_PROCESSOR_X86_64
-	REQUIRE(s1.capacity() == min_capacity);
-#else
-	REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
-#endif
+    s1.resize(68, 1);
+    REQUIRE("11111111111111111111111111111111111111111111111111111111111111111111" == to_string(s1));
 
 	s1.resize(254, 0);
 	REQUIRE("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111111111111111111111111111111111111111111111111111111111111111111"
 				   == to_string(s1));
-	REQUIRE(s1.capacity() > min_capacity);
+    //REQUIRE(s1.capacity() > min_capacity);
 
-	s1.shrink();
-	REQUIRE(s1.capacity() == 256);
+    //s1.shrink();
+    //REQUIRE(s1.capacity() == 256);
 
 	s1.resize(190, 0);
-	s1.shrink();
+    //s1.shrink();
 	REQUIRE("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111111111111111111111111111111111111111111111111111111111111111111"
 				   == to_string(s1));
-	REQUIRE(s1.capacity() == 192);
+    //REQUIRE(s1.capacity() == 192);
 
 	bitvector_t s2(72, true);
 	REQUIRE("111111111111111111111111111111111111111111111111111111111111111111111111" == to_string(s2));
 #ifdef STDX_PROCESSOR_X86_64
-	REQUIRE(s2.capacity() == min_capacity);
+    //REQUIRE(s2.capacity() == min_capacity);
 #else
-	REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
+    //REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
 #endif
 
-	s2.reserve(256);
+    //s2.reserve(256);
 	std::string t = to_string(s2);
 	REQUIRE("111111111111111111111111111111111111111111111111111111111111111111111111" == t);
-	REQUIRE(s2.capacity() > min_capacity);
 
 	s2.resize(230, 0);
 	REQUIRE("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111111111111"
 				   == to_string(s2));
 
 	s1.resize(24, 1);
-	s1.shrink();
+    //s1.shrink();
 #ifdef STDX_PROCESSOR_X86_64
-	REQUIRE(s1.capacity() == min_capacity);
+    //REQUIRE(s1.capacity() == min_capacity);
 #else
-	REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
+    //REQUIRE(s1.capacity() == 2 * bitvector_t::bpw);
 #endif
 
 	bitvector_t s3 = s1;
@@ -151,7 +131,7 @@ TEST_CASE("bitvector/memory", "[bitvector]")
 	REQUIRE(s2.size() == s1.size());
 
 	s2.resize(0);
-	s2.shrink();
+    //s2.shrink();
 	REQUIRE(s2.size() == 0);
 	REQUIRE(s2.empty());
 
@@ -185,34 +165,36 @@ TEST_CASE("bitvector/flip", "[bitvector]")
 	typedef stdx::bitvector<> bitvec;
 	std::string s;
 	std::bitset<256> _bits("1101010101010101010111111111100000001110100011111001111101010111110101010101010101011111111110000000111010001111100111110101011111010101010101010101111111111000000011101000111110011111010101111101010101010101010111111111100000001110100011111001111101010111");
-	bitvec bits(_bits), result(256, 0);
+    bitvec bits(_bits);
+    bitvec result(256, 0);
 
-	stdx::flip(bits.begin(), bits.begin(), bits.begin());
-	stdx::flip(bits.begin(), bits.begin(), result.begin());
+    stdx::flip_range(bits.begin(), bits.begin(), bits.begin());
+    stdx::flip_range(bits.begin(), bits.begin(), result.begin());
 
-	stdx::flip(bits.begin() + 7, bits.begin() + 25, result.begin());
+    stdx::flip_range(bits.begin() + 7, bits.begin() + 25, result.begin());
 	s = to_string(result.begin(), result.begin() + 18);
 	REQUIRE("101110000011000001" == s);
 
-	stdx::flip(bits.begin(), bits.begin() + 10, result.begin());
+    stdx::flip_range(bits.begin(), bits.begin() + 10, result.begin());
 	s = to_string(result.begin(), result.begin() + 10);
 	REQUIRE("0010101000" == s);
 
-	stdx::flip(bits.begin(), bits.end(), result.begin());
+    stdx::flip_range(bits.begin(), bits.end(), result.begin());
 	s = to_string(result);
 	REQUIRE("0010101010101010101000000000011111110001011100000110000010101000001010101010101010100000000001111111000101110000011000001010100000101010101010101010000000000111111100010111000001100000101010000010101010101010101000000000011111110001011100000110000010101000" == s);
 
-	stdx::flip(result.begin(), result.end(), result.begin());
+    stdx::flip_range(result.begin(), result.end(), result.begin());
 	s = to_string(result);
 	REQUIRE("1101010101010101010111111111100000001110100011111001111101010111110101010101010101011111111110000000111010001111100111110101011111010101010101010101111111111000000011101000111110011111010101111101010101010101010111111111100000001110100011111001111101010111" == s);
 
-	stdx::flip(result.begin(), result.begin() + 10, result.begin());
+    stdx::flip_range(result.begin(), result.begin() + 10, result.begin());
 	s = to_string(result.begin(), result.begin() + 10);
 	REQUIRE("0010101000" == s);
 
-	stdx::flip(bits.begin() + 5, bits.end() - 5, result.begin());
+    stdx::flip_range(bits.begin() + 5, bits.end() - 5, result.begin());
 	s = to_string(result.begin(), result.end() - 10);
-	REQUIRE("010101010101010000000000111111100010111000001100000101010000010101010101010101000000000011111110001011100000110000010101000001010101010101010100000000001111111000101110000011000001010100000101010101010101010000000000111111100010111000001100000101" == s);
+    REQUIRE("010101010101010000000000111111100010111000001100000101010000010101010101010101000000000011111110001011100000110000010101000001010101010101010100000000001111111000101110000011000001010100000101010101010101010000000000111111100010111000001100000101" == s);
+
 }
 
 TEST_CASE("bitvector/equal_range", "[bitvector]")
@@ -338,53 +320,50 @@ TEST_CASE("bitvector/compare", "[bitvector]")
 }
 
 
-
-
-
-TEST_CASE("bitvector/algorithms", "[bitvector]")
+TEST_CASE("bitalgo/basic_algos", "[bitvector]")
 {
-	using namespace std;
-	using ::detail::to_string;
+    using namespace std;
+    using ::detail::to_string;
 
-	typedef stdx::bitvector<> bitvec;
+    typedef stdx::bitvector<> bitvec;
 
-	string rep;
+    string rep;
 
-	bitset<65> _bits("11010101010101010101111111111000000011101000111110011111010100000");
-	bitvec bits(_bits);
-	rep = to_string(bits);
+    bitset<65> _bits("11010101010101010101111111111000000011101000111110011111010100000");
+    bitvec bits(_bits);
+    rep = to_string(bits);
 
-	auto it0 = find(bits.begin(), bits.begin() + 15, 1);
-	size_t n0 = distance(bits.begin(), it0);
-	REQUIRE(*it0);
-	REQUIRE(bits[n0]);
-	REQUIRE(n0 == 5);
+    auto it0 = find(bits.begin(), bits.begin() + 15, 1);
+    size_t n0 = distance(bits.begin(), it0);
+    REQUIRE(*it0);
+    REQUIRE(bits[n0]);
+    REQUIRE(n0 == 5);
 
 
-	auto it1 = find(bits.begin() + 5, bits.begin() + 15, 0);
-	size_t n1 = distance(bits.begin(), it1);
-	REQUIRE_FALSE(*it1);
-	REQUIRE_FALSE(bits[n1]);
-	REQUIRE(6 == n1);
+    auto it1 = find(bits.begin() + 5, bits.begin() + 15, 0);
+    size_t n1 = distance(bits.begin(), it1);
+    REQUIRE_FALSE(*it1);
+    REQUIRE_FALSE(bits[n1]);
+    REQUIRE(6 == n1);
 
-	fill(bits.begin(), bits.begin() + 5, true);
-	rep = to_string(bits);
-	REQUIRE(rep.substr(rep.size() - 5, 5) == "11111");
+    fill(bits.begin(), bits.begin() + 5, true);
+    rep = to_string(bits);
+    REQUIRE(rep.substr(rep.size() - 5, 5) == "11111");
 
-	fill(bits.begin() + 15, bits.begin() + 20, false);
-	rep = to_string(bits);
-	REQUIRE(rep.substr(rep.size() - 20, 5) == "00000");
+    fill(bits.begin() + 15, bits.begin() + 20, false);
+    rep = to_string(bits);
+    REQUIRE(rep.substr(rep.size() - 20, 5) == "00000");
 
-	size_t n = count(bits.begin() + 5, bits.begin() + 15, 1);
-	REQUIRE(7 == n);
+    size_t n = count(bits.begin() + 5, bits.begin() + 15, 1);
+    REQUIRE(7 == n);
 
-	string buf = to_string(bits);
-	rotate(buf.begin(), buf.end() - 5, buf.end());
+    string buf = to_string(bits);
+    rotate(buf.begin(), buf.end() - 5, buf.end());
 
-	rotate(bits.begin(), bits.begin() + 5, bits.end());
-	rep = to_string(bits);
+    rotate(bits.begin(), bits.begin() + 5, bits.end());
+    rep = to_string(bits);
 
-	REQUIRE(buf == rep);
+    REQUIRE(buf == rep);
 
     bitset<25> vv("000000000000000001111111");
     bits = vv;
@@ -401,6 +380,17 @@ TEST_CASE("bitvector/algorithms", "[bitvector]")
         REQUIRE(buf == rep);
     }
 
+}
+
+
+TEST_CASE("bitvector/transform_aligned", "[bitvector]")
+{
+	using namespace std;
+	using ::detail::to_string;
+
+	typedef stdx::bitvector<> bitvec;
+
+	string rep;
 
 	/// bit transformation
 
@@ -582,6 +572,715 @@ TEST_CASE("bitvector/algorithms", "[bitvector]")
 	transform(sx.rbegin() + 128, sx.rend(), sy.rbegin() + 128, sz.rbegin(), __and);
 	REQUIRE(sz == rep);
 }
+
+
+
+
+void __test_bit_transform_000(size_t length);
+void __test_bit_transform_001(size_t length);
+void __test_bit_transform_010(size_t length);
+void __test_bit_transform_011(size_t length);
+void __test_bit_transform_100(size_t length);
+void __test_bit_transform_101(size_t length);
+void __test_bit_transform_110(size_t length);
+void __test_bit_transform_111(size_t length);
+
+TEST_CASE("bitvector/transform_unaligned", "[bitvector]")
+{
+    typedef stdx::bitvector<> bitvec;
+    static const size_t bpw =  bitvec::bpw;
+
+    __test_bit_transform_000((bpw / 2) - 3);
+    __test_bit_transform_000((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_000(bpw - 1);
+    __test_bit_transform_000(bpw);
+    __test_bit_transform_000(bpw + 1);
+    __test_bit_transform_000(2 * bpw + 11);
+
+    __test_bit_transform_001((bpw / 2) - 3);
+    __test_bit_transform_001((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_001(bpw - 1);
+    __test_bit_transform_001(bpw);
+    __test_bit_transform_001(bpw + 1);
+    __test_bit_transform_001(2 * bpw + 11);
+
+    __test_bit_transform_010((bpw / 2) - 3);
+    __test_bit_transform_010((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_010(bpw - 1);
+    __test_bit_transform_010(bpw);
+    __test_bit_transform_010(bpw + 1);
+    __test_bit_transform_010(2 * bpw + 11);
+
+    __test_bit_transform_011((bpw / 2) - 3);
+    __test_bit_transform_011((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_011(bpw - 1);
+    __test_bit_transform_011(bpw);
+    __test_bit_transform_011(bpw + 1);
+    __test_bit_transform_011(2 * bpw + 11);
+
+    __test_bit_transform_100((bpw / 2) - 3);
+    __test_bit_transform_100((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_100(bpw - 1);
+    __test_bit_transform_100(bpw);
+    __test_bit_transform_100(bpw + 1);
+    __test_bit_transform_100(2 * bpw + 11);
+
+    __test_bit_transform_101((bpw / 2) - 3);
+    __test_bit_transform_101((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_101(bpw - 1);
+    __test_bit_transform_101(bpw);
+    __test_bit_transform_101(bpw + 1);
+    __test_bit_transform_101(2 * bpw + 11);
+
+    __test_bit_transform_110((bpw / 2) - 3);
+    __test_bit_transform_110((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_110(bpw - 1);
+    __test_bit_transform_110(bpw);
+    __test_bit_transform_110(bpw + 1);
+    __test_bit_transform_110(2 * bpw + 11);
+
+    __test_bit_transform_111((bpw / 2) - 3);
+    __test_bit_transform_111((bpw / 2) + (bpw / 4) - 1);
+    __test_bit_transform_111(bpw - 1);
+    __test_bit_transform_111(bpw);
+    __test_bit_transform_111(bpw + 1);
+    __test_bit_transform_111(2 * bpw + 11);
+
+}
+
+
+
+void __test_bit_transform_000(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin(), z.begin(), bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin(), sz.rbegin(), __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin(), z.begin(), bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin(), sz.rbegin(), __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin(), z.begin(), bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin(), sz.rbegin(), __and);
+    REQUIRE(sz == rep);
+
+
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 3, x.begin() + (length + 3), y.begin() + 3, z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 3, sx.rbegin() + (length + 3), sy.rbegin() + 3, sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 3, x.begin() + (length + 3), y.begin() + 3, z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 3, sx.rbegin() + (length + 3), sy.rbegin() + 3, sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 3, x.begin() + (length + 3), y.begin() + 3, z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 3, sx.rbegin() + (length + 3), sy.rbegin() + 3, sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+}
+
+void __test_bit_transform_001(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin(), z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin(), sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin(), z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin(), sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + (length + 1), y.begin(), z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 1, z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 1, sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 1, z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 1, sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 1, z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 1, sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+
+
+}
+
+void __test_bit_transform_010(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin(), bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin(), __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin(), bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin(), __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin(), bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin(), __and);
+    REQUIRE(sz == rep);
+
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __and);
+    REQUIRE(sz == rep);
+}
+
+
+
+void __test_bit_transform_011(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin() + 1, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin() + 1, __or);
+    REQUIRE(sz == rep);
+
+    /// part of single word
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin() + 1, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin() + 1, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin(), x.begin() + length, y.begin() + 3, z.begin() + 1, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin(), sx.rbegin() + length, sy.rbegin() + 3, sz.rbegin() + 1, __and);
+    REQUIRE(sz == rep);
+
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 2, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 2, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 2, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 2, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 2, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 2, __and);
+    REQUIRE(sz == rep);
+}
+
+
+
+void __test_bit_transform_100(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin(), bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin(), __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin(), bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin(), __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin(), bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin(), __and);
+    REQUIRE(sz == rep);
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 1), y.begin() + 3, z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 1), y.begin() + 3, z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 1), y.begin() + 3, z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+
+}
+
+void __test_bit_transform_101(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin(), z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin(), sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin(), z.begin() + 11, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin(), sz.rbegin() + 11, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin(), z.begin() + 11, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin(), sz.rbegin() + 11, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin(), z.begin() + 11, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin(), sz.rbegin() + 11, __and);
+    REQUIRE(sz == rep);
+}
+
+void __test_bit_transform_110(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin(), bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin(), __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin(), bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin(), __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin(), bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin(), __and);
+    REQUIRE(sz == rep);
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 28, z.begin(), bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 28, sz.rbegin(), __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 28, z.begin(), bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 28, sz.rbegin(), __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 28, z.begin(), bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 28, sz.rbegin(), __and);
+    REQUIRE(sz == rep);
+}
+
+
+void __test_bit_transform_111(size_t length)
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 1, x.begin() + (length + 1), y.begin() + 3, z.begin() + 1, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 1, sx.rbegin() + (length + 1), sy.rbegin() + 3, sz.rbegin() + 1, __and);
+    REQUIRE(sz == rep);
+
+
+    /// OR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin() + 1, z.begin() + 3, bit_or<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin() + 1, sz.rbegin() + 3, __or);
+    REQUIRE(sz == rep);
+
+    /// XOR
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin() + 1, z.begin() + 3, bit_xor<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin() + 1, sz.rbegin() + 3, __xor);
+    REQUIRE(sz == rep);
+
+    /// AND
+    x = bx; y = by; z = bz;
+    stdx::transform(x.begin() + 28, x.begin() + (length + 28), y.begin() + 11, z.begin() + 3, bit_and<>());
+    rep = to_string(z);
+
+    sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+    std::transform(sx.rbegin() + 28, sx.rbegin() + (length + 28), sy.rbegin() + 11, sz.rbegin() + 3, __and);
+    REQUIRE(sz == rep);
+}
+
+
+
 
 
 

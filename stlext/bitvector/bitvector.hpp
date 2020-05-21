@@ -1,808 +1,1315 @@
-// Copyright (c) 2016-2018, Michael Polukarov (Russia).
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer listed
-//   in this license in the documentation and/or other materials
-//   provided with the distribution.
-//
-// - Neither the name of the copyright holders nor the names of its
-//   contributors may be used to endorse or promote products derived from
-//   this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+
 #include <bitset>
-#include "bit_storage.hpp"
-#include "../functional/bit_andnot.hpp"
+
+#include "bitset.hpp"
+#include "bitstorage.hpp"
 
 _STDX_BEGIN
 
-
 /*!
-\brief template class bitvector<_Word, _Alloc> represent a dynamic-sized bit array.
-
-\tparam _Word machinery word type (defaulted to uintmax_t)
-\tparam _Alloc memory allocator type (defaulted to std::allocator<_Word>)
-
-class bitvector<_Word, _Alloc> represent a dynamic-sized bit array.
-
-A bitvector is an array that gives access to individual bits and provides
-basic operators (such as AND, OR, XOR, NOT etc.) that work on entire arrays of bits.
-
-As a dynamic-sized vector of bit, bitvector instances can be resized in
-run-time to any number of bits between 0 and a value of max_size() method.
-A bitvector with size of 0 bits is treated as empty vector.
-
-Memory allocation/deallocation is managed by special functions (like reserve(), 
-resize(), shrink() and others) that resembles such in a STL vector<T> container.
-
-Internally bit data is stored in continious memory blocks of type _Word.
-All bits are packed in machine words of type _Word.
-It may or may not using SBO (Small-Buffer-Optimization) depending on 
-combination of current OS, processor and environment settings.
-Bit storage is implemented in bit_storage<> internal class, and not
-intended to use directly.
-
-bitvector<_Word, _Alloc> class implemented according to STL
-container specifications and provide some optimized standart algorithms.
-
-*/
+ * \class bitvector
+ *
+ * \tparam _Word   type of machine word
+ * \tparam _Opt    type of space optimization
+ * \tparam _Alloc  type of memory allocator
+ *
+ *
+ */
 template<
-    class _Word = uintmax_t,
-    class _Alloc = std::allocator<_Word>
+     class _Word = uintptr_t,
+     size_t _Opt = __DefaultBitStorageTag,
+     class _Alloc = std::allocator<_Word>
 >
-class bitvector
+class bitvector :
+        public bitstorage<_Opt, _Word, _Alloc>
 {
-
-#ifndef _STDX_NO_BITVECTOR_SBO_
-#if defined(STDX_PROCESSOR_X86_64) || defined(STDX_PROCESSOR_IA64)
-#ifdef _STDX_NO_AGRESSIVE_SBO_ // use SBO for bitvector
-    typedef buf_opt optimization_type;
-#else // use agressive SBO with tagged pointers
-    typedef tag_opt optimization_type;
-#endif
-#else // non-optimized version
-    typedef non_opt optimization_type;
-#endif
-#else // SBO is disabled
-    typedef non_opt optimization_type;
-#endif
-
-    typedef detail::bit_storage<_Word, _Alloc, optimization_type> storage_t;
-    typedef typename storage_t::traits_type traits_type;
+    static_assert(std::is_integral<_Word>::value && std::is_unsigned<_Word>::value,
+                  "_Word type must be an unsigned interal type");
 
 public:
-    /*! number of bits per word */
-    static constexpr size_t bpw = storage_t::bpw;
+    typedef bitstorage<_Opt, _Word, _Alloc> storage_type; /*! bit-storage type */
 
-    /*! allocator type */
-    typedef _Alloc allocator_type;
+    typedef _Alloc allocator_type; /*! allocator type */
 
-    /*! type of word */
-    typedef _Word word_type;
-    /*! type of size */
-    typedef size_t size_type;
-    /*! word pointer type */
-    typedef word_type* pointer;
-    /*! constant word pointer type*/
-    typedef const word_type* const_pointer;
-    /*! element type (bool) */
-    typedef bool  element_type;
+    typedef size_t size_type;      /*! type of size */
+    typedef bool   element_type;   /*! element type (bool) */
+    typedef _Word  word_type;      /*! type of word */
 
-    /*! type of reference */
-    typedef bit_reference<_Word>        reference;
-    /*! type of const_reference */
-    typedef bit_const_reference<_Word>  const_reference;
+    typedef _Word* pointer;              /*! word pointer type */
+    typedef const _Word* const_pointer;  /*! constant word pointer type*/
 
-    /*! type of iterator */
-    typedef bit_iterator<_Word, false>  iterator;
-    /*! type of const iterator */
-    typedef bit_iterator<_Word, true>   const_iterator;
 
-    /*! type of reverse iterator */
-    typedef std::reverse_iterator<iterator> reverse_iterator;
-    /*! type of const reverse iterator */
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef stdx::bit_traits<_Word> traits_type;  /*! bit traits type */
 
-    /*!
-    \brief default constructor
-    */
-    bitvector() {
-    }
 
-    /*!
-    \brief parametized constructor
-    \param al allocator const reference
-    */
-    explicit bitvector(const _Alloc& al) :
-        __m_storage(al) {
-    }
+    typedef stdx::bit_reference<_Word>            reference;       /*! type of reference */
+    typedef stdx::bit_reference<const _Word>      const_reference; /*! type of const_reference */
 
-    /*!
-    \brief parametized constructor
-    \param n  number of bits in vector
-    \param v  bits initialization value (0 by default)
-    \note \b Complexity: linear O(N/bpw) bit assignments
-    */
-    explicit bitvector(size_type n, element_type v = element_type(0)) :
-        __m_storage(n, v) {
-    }
 
-    /*!
-    \brief parametized constructor
-    \tparam _It  iterator type
-    \param nbits number of bits in vector
-    \param first iterator pointing to first input word
-    \param last  iterator pointing to one-past-last input word
-    \note \b Complexity: linear O(N/bpw) bit assignments
-    \warning type of iterator value type must be the same as bitvector _Word
-    */
-    template<class _It>
-    explicit bitvector(size_type nbits, _It first, _It last) {
-        __m_storage.assign(nbits, first, last);
-    }
+    typedef stdx::bit_iterator<_Word, false>      iterator;         /*! type of iterator */
+    typedef stdx::bit_iterator<_Word, true>       const_iterator;   /*! type of const iterator */
 
-    /*!
-    \brief parametized constructor
-    \tparam N   number of bits in bitset
-    \param bits bitset const reference
-    \note \b Complexity: linear O(N) bit assignments
-    */
+    typedef std::reverse_iterator<iterator>       reverse_iterator;        /*! type of reverse iterator */
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;  /*! type of constant reverse iterator */
+
+    //
+    // Constants
+    //
+
+    static constexpr size_t bpw          = traits_type::bpw; /*! number of bits per word */
+    static constexpr size_t optimization = _Opt;             /*! storage space optimization tag */
+
+
+    //
+    // Constructors and destructor
+    //
+
+    bitvector();
+
+    bitvector(const bitvector& other);
+    //bitvector(bitvector&& other);
+
+    explicit bitvector(const _Alloc& al);
+    explicit bitvector(size_type n, bool on = false, const _Alloc& al = _Alloc());
+
+    bitvector(const_pointer p, size_t pn, size_t nbits = 0, const _Alloc& al = _Alloc());
+
+    bitvector(std::initializer_list<bool> ilist, const _Alloc& al = _Alloc());
+
+    // TODO: think how we can implement this efficently?
+    /*template<class _InIt>
+    bitvector(_InIt first, _InIt last, size_t nbits = 0, const _Alloc& al = _Alloc());*/
+
+    template<class _Wx, bool _IsConst>
+    bitvector(bit_iterator<_Wx, _IsConst> first,
+              bit_iterator<_Wx, _IsConst> last,
+              const _Alloc& al = _Alloc());
+
+    template<class _Wx, size_t _Tag, class _Al>
+    bitvector(const bitvector<_Wx, _Tag, _Al>& other);
+
+    template<size_t N, class _Wx>
+    bitvector(const stdx::bitset<N, _Wx>& bits);
+
     template<size_t N>
-    bitvector(const std::bitset<N>& bits) :
-        __m_storage(N, false)
-    {
-        for (size_t i = 0; i < N; i++)
-            set(i, bits.test(i));
+    bitvector(const std::bitset<N>& bits);
+
+    ~bitvector();
+
+    //
+    // Assignment and move
+    //
+
+
+    template<class _Wx, size_t _Tag, class _Al>
+    bitvector& operator= (const bitvector<_Wx, _Tag, _Al>& other);
+
+    bitvector& operator= (std::initializer_list<bool> ilist);
+
+    bitvector& operator= (const bitvector& other);
+    //bitvector& operator= (bitvector&& other);
+
+    void assign(size_t n, bool on);
+    void assign(const_pointer p, size_t pn, size_t nbits = 0);
+
+    void assign(std::initializer_list<bool> ilist);
+
+    // TODO: think how we can implement this efficently?
+    /*template<class _InIt>
+    bitvector& assign(_InIt first, _InIt last, size_t nbits = 0);*/
+
+    template<class _Wx, bool _IsConst>
+    void assign(bit_iterator<_Wx, _IsConst> first,
+                bit_iterator<_Wx, _IsConst> last);
+
+
+
+    allocator_type get_allocator() const;
+
+    void swap(bitvector& other);
+
+    //
+    // Iterators
+    //
+
+    iterator begin();
+    iterator end();
+
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    const_iterator cbegin() const;
+    const_iterator cend() const;
+
+    reverse_iterator rbegin();
+    reverse_iterator rend();
+
+    const_reverse_iterator rbegin() const;
+    const_reverse_iterator rend() const;
+
+    const_reverse_iterator crbegin() const;
+    const_reverse_iterator crend() const;
+
+    //
+    // Memory management and observers
+    //
+
+    template<bool _IsConst>
+    iterator insert(const_iterator pos,
+                    bit_iterator<_Word, _IsConst> first,
+                    bit_iterator<_Word, _IsConst> last);
+
+    iterator insert(const_iterator pos,
+                    size_type count,
+                    bool value = false);
+
+    iterator insert(const_iterator pos,
+                    std::initializer_list<bool> ilist);
+
+
+    iterator erase(const_iterator first, const_iterator last);
+    iterator erase(const_iterator pos, size_t n);
+
+
+    void resize(size_t nbits, bool on = false);
+
+    //
+    // Provided by bitstorage interface:
+    //
+    // void resize(size_t nbits);
+    // void shrink();
+    // void clear();
+    //
+    // pointer data();
+    // const_pointer data() const;
+    // size_t size() const;
+    //
+
+    size_type max_size() const;
+    size_type nblocks() const;
+    size_type capacity() const;
+
+    bool empty() const;
+
+    size_type count(bool on = true) const;
+    double density() const;
+
+    bool all() const;
+    bool any() const;
+    bool none() const;
+
+    //
+    // Bit-level access operations
+    //
+
+    reference operator[](size_t pos);
+    bool operator[](size_t pos) const;
+
+    bool test(size_type pos) const;
+    bool at(size_type pos) const;
+
+    bitvector &set(size_type pos, bool on = true);
+    bitvector& set();
+
+    bitvector& reset(size_type pos);
+    bitvector& reset();
+
+    bitvector& flip(size_type pos);
+    bitvector& flip();
+
+    //
+    // Set-relational operations
+    //
+
+    bool contains(const bitvector& other);
+    bool intersects(const bitvector& other);
+
+    //
+    // Bitwise operations
+    //
+
+    bitvector& operator~ ();
+
+    bitvector& operator&= (const bitvector& other);
+    bitvector& operator|= (const bitvector& other);
+    bitvector& operator^= (const bitvector& other);
+
+    bitvector& operator<<= (size_type pos);
+    bitvector& operator>>= (size_type pos);
+
+    bitvector operator<< (size_type pos);
+    bitvector operator>> (size_type pos);
+
+
+    //
+    // String conversion
+    //
+
+    template<class _Char, class _Traits, class _CharAlloc>
+    inline operator std::basic_string<_Char, _Traits, _CharAlloc> () const {
+        std::basic_string<_Char, _Traits, _CharAlloc> result;
+        return stdx::detail::__to_string(this->begin(), this->end(), result, _Char('1'), _Char('0'));
     }
 
-
-    /// Copy/move constructors and operators
-    /// are compiler generated
-
-
-    /*!
-    \brief destructor
-
-    free all memory and resources occupied
-    by current instance of bitvector
-    */
-    ~bitvector() {
+    template<class _Char, class _Traits, class _CharAlloc>
+    inline std::basic_string<_Char, _Traits, _CharAlloc>&
+        to_string(std::basic_string<_Char, _Traits, _CharAlloc>& s, _Char on, _Char off) const {
+            return stdx::detail::__to_string(this->begin(), this->end(), s, on, off);
     }
-
-    /// MEMORY MANAGEMENT
-
-    /*!
-    \brief retrieve allocator object
-    \return allocator that is currently in use
-    */
-    allocator_type get_allocator() const {
-        return (allocator_type)__m_storage;
-    }
-
-    /*!
-    \brief shrinks internal buffer
-    */
-    void shrink() {
-        __m_storage.shrink();
-    }
-
-    /*!
-    \brief reserve uninitialized memory
-
-    reserve uninitialized memory for bitvector
-    of size n bits
-    \param n number of reserving bits
-    */
-    void reserve(size_t n) {
-        __m_storage.reserve(n);
-    }
-
-    /*!
-    \brief resize bitvector
-    \param n new number of bits
-    \param value value to fill on resize
-    */
-    void resize(size_t n, element_type value = 0) {
-        __m_storage.resize(n, value);
-    }
-
-    /*!
-    \brief clean up bitvector
-
-    release all resources of bit vector
-    and set size to 0
-    */
-    void clear() {
-        __m_storage.clear();
-    }
-
-
-    /// BITWISE ACCESS
-
-    /*!
-    \brief clear bit with index pos
-    \param pos bit index
-    \return reference to modified bitvector
-    \note \b Complexity: constant O(1)
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline bitvector& reset(size_type pos) noexcept
-    {
-        traits_type::clear_bit(__m_storage.data(), pos);
-        return (*this);
-    }
-
-    /*!
-    \brief clear all bits in bitvector
-
-    set all bits to 0.
-    \note \b Complexity: linear O(N/bpw)
-    */
-    inline bitvector& reset() {
-        stdx::__fill_n_false(__m_storage.begin(), __m_storage.nbits());
-        return (*this);
-    }
-
-
-    /*!
-    \brief flip bit at index pos
-    \param pos bit index
-    \return reference to modified bitvector
-    \note never throws
-    \note \b Complexity: constant O(1)
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline bitvector& flip(size_type pos) noexcept
-    {
-        traits_type::flip_bit(__m_storage.data(), pos);
-        return (*this);
-    }
-
-
-    /*!
-    \brief flip all bits in bitvector
-
-    flip all bits
-    \note \b Complexity: linear O(N/bpw)
-    */
-    inline bitvector& flip() {
-        stdx::__flip_inplace(__m_storage.begin(), __m_storage.end());
-        return (*this);
-    }
-
-
-    /*!
-    \brief set bit with index pos
-    \param pos bit index
-    \return reference to modified bitvector
-    \note never throws
-    \note \b Complexity: constant O(1)
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline bitvector& set(size_type pos, bool v) noexcept
-    {
-        traits_type::set_bit(data(), pos, v);
-        return (*this);
-    }
-
-    /*!
-    \brief set all bits
-
-    set all bits to 1.
-    \return reference to modified bitvector
-    \note \b Complexity: linear O(N/bpw)
-    */
-    inline bitvector& set() {
-        stdx::__fill_n_true(__m_storage.begin(), __m_storage.nbits());
-        return (*this);
-    }
-
-
-    /*!
-    \brief test bit at index pos
-    \param pos bit index
-    \return true if bit is set, otherwise false
-    \note never throws
-    \note \b Complexity: constant O(1)
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline bool test(size_type pos) const noexcept {
-        return traits_type::test_bit(data(), pos);
-    }
-
-
-    /*!
-    \brief test bit at index pos
-    \param pos bit index
-    \return true if bit is set, otherwise false
-    \note throw out_of_range exception if pos is out of valid range
-    */
-    inline bool at(size_type pos) const {
-        __stdx_assertx(pos < size(), std::out_of_range, "incorrect bit position");
-        return test(pos);
-    }
-
-
-    /*!
-    \brief subscript operator overload
-    \param pos bit index
-    \return bit reference proxy class
-    \note never throws
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline reference operator[](size_type pos) noexcept {
-        return reference(*(data() + traits_type::block_index(pos)), (word_type)traits_type::bit_mask(pos));
-    }
-
-    /*!
-    \brief subscript operator overload (const version)
-    \param pos bit index
-    \return bit reference proxy class
-    \note never throws
-    \warning trying to access bits outside valid range is undefined
-    */
-    inline bool operator[](size_type pos) const noexcept {
-        return this->test(pos);
-    }
-
-
-    /// BIT ITERATORS
-
-    iterator begin() { return __m_storage.begin(); }
-    const_iterator begin() const { return __m_storage.begin(); }
-    const_iterator cbegin() const { return __m_storage.begin(); }
-
-    iterator end() { return __m_storage.end(); }
-    const_iterator end() const { return __m_storage.end(); }
-    const_iterator cend() const { return __m_storage.end(); }
-
-    /// REVERSE ITERATORS
-
-    reverse_iterator rbegin() { return reverse_iterator(__m_storage.end()); }
-    const_reverse_iterator rbegin() const  { return const_reverse_iterator(__m_storage.end()); }
-    const_reverse_iterator crbegin() const { return const_reverse_iterator(__m_storage.end()); }
-
-    reverse_iterator rend() { return reverse_iterator(__m_storage.begin()); }
-    const_reverse_iterator rend() const  { return const_reverse_iterator(__m_storage.begin()); }
-    const_reverse_iterator crend() const { return const_reverse_iterator(__m_storage.begin()); }
-
-    /// OBSERVER METHODS
-
-    /*!
-    \brief raw-pointer to internal machine words array (non-const version)
-    \note provided for convinience
-    */
-    inline pointer data() { return __m_storage.data(); }
-    /*!
-    \brief raw-pointer to internal machine words array (const version)
-    \note provided for convinience
-    */
-    inline const_pointer data() const { return __m_storage.data(); }
-
-    /*!
-    \brief number of allocated machine words
-    \return number of allocated machine words to hold all bits
-    */
-    inline size_type blocks() const { return __m_storage.nblocks(); }
-
-    /*!
-    \brief size of bitvector
-    \return number of bits in vector
-    */
-    inline size_type size() const { return __m_storage.nbits(); }
-
-    /*!
-    \brief internal buffer capacity in bits
-    */
-    inline size_type capacity() const { return (__m_storage.capacity()); }
-
-    /*!
-    \brief maximum internal buffer capacity in bits
-    */
-    inline size_type max_size() const { return (storage_t::max_size); }
-
-    /*!
-    \brief count set bits
-    \return number of set bits
-    */
-    inline size_type count() const {
-        return stdx::__count_bool_true(begin(), size());
-    }
-
-    /*!
-    \brief density
-
-    compute density of bit-vector
-    \return density factor
-    \note \b Complexity: O(N/bpw)
-    */
-    inline double density() const
-    {
-        size_type n = size();
-        size_type s = count();
-        return (n != 0 ? (s / static_cast<double>(n)) : 0.0);
-    }
-
-    /*!
-    \brief checks if at least one bit is set
-    \return true if at least one bit is set, otherwise false
-    \note \b Complexity: O(N/bpw)
-    */
-    inline bool any() const {
-        return (stdx::__find_bool_true(begin(), size()) != end());
-    }
-
-    /*!
-    \brief checks if no bits is set
-    \return true if at least one bit is set, otherwise false
-    \note \b Complexity: O(N/bpw)
-    */
-    inline bool none() const {
-        return (!any());
-    }
-
-    /*!
-    \brief checks if all bits is set
-    \return true if at least one bit is set, otherwise false
-    \note \b Complexity: O(N/bpw)
-    */
-    inline bool all() const {
-        return (count() == size());
-    }
-
-    /*!
-    \brief checks if bitvector is empty
-    \return true if bitvector is empty, otherwise false
-    */
-    inline bool empty() const {
-        return (__m_storage.nbits() == 0);
-    }
-
-    /// COMMON BITWIZE OPERATIONS IMPLEMENTATIONS
-
-    /// UNARY OPERATORS OVERLOADING
-
-    /*!
-    \brief bitwise AND unary operator overload
-    \param __other bitvector to AND with
-    \return reference to modified bitvector anded with other
-    \note \b Complexity: linear O(size()/bpw) assignments and O(size()/#bpw) bitwise operations
-    \note this code uses interally implemented algorithm with micro-optimizations
-    */
-    inline bitvector& operator&= (const bitvector& other)
-    {
-        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
-        // this code relies on auto-vectorization
-        transform(cbegin(), cend(), other.begin(), begin(), std::bit_and<word_type>());
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise OR unary operator overload
-    \param __other bitvector to OR with
-    \return reference to modified bitvector ored with other
-    \note \b Complexity: linear O(size()/bpw) assignments and O(size()/#bpw) bitwise operations
-    \note this code uses interally implemented algorithm with micro-optimizations
-    */
-    inline bitvector& operator|= (const bitvector& other)
-    {
-        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
-        // this code relies on auto-vectorization
-        transform(cbegin(), cend(), other.begin(), begin(), std::bit_or<word_type>());
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise XOR unary operator overload
-    \param __other bitvector to XOR with
-    \return reference to modified bitvector xored with other
-    \note \b Complexity: linear O(size()/bpw) assignments and O(size()/#bpw) bitwise operations
-    \note this code uses interally implemented algorithm with micro-optimizations
-    */
-    inline bitvector& operator^= (const bitvector& other)
-    {
-        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
-        // this code relies on auto-vectorization
-        transform(cbegin(), cend(), other.begin(), begin(), std::bit_xor<word_type>());
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise AND-NOT unary operator overload
-    \param __other bitvector to XOR with
-    \return reference to modified bitvector and-not with __other
-    \note \b Complexity: linear O(size()/bpw) assignments and O(size()/#bpw) bitwise operations
-    \note this code uses interally implemented algorithm with micro-optimizations
-    */
-    inline bitvector& operator-=(const bitvector& other)
-    {
-        __stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
-        // this code relies on auto-vectorization
-        transform(cbegin(), cend(), other.begin(), begin(), std::bit_andnot<word_type>());
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise left shift operator overload (SHL)
-    \param pos shift amount
-    \return reference to modified bitvector shifted left by pos
-    \note \b Complexity: linear O(nwords) bitwise operations
-    */
-    inline bitvector& operator<<= (size_t pos) {
-        __m_storage.lshift(pos);
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise right shift operator overload (SHR)
-    \param pos shift amount
-    \return reference to modified bitvector shifted right by pos
-    \note \b Complexity: linear O(nwords) bitwise operations
-    */
-    inline bitvector& operator>>= (size_t pos) {
-        __m_storage.rshift(pos);
-        return (*this);
-    }
-
-    /*!
-    \brief bitwise left shift operator overload (SHL)
-    \param pos shift amount
-    \return copy of bitvector shifted left by pos (SHL)
-    */
-    inline bitvector operator<< (size_t pos) const {
-        return (bitvector(*this) <<= pos);
-    }
-
-    /*!
-    \brief bitwise right shift operator overload (SHR)
-    \param pos shift amount
-    \return copy of bitvector shifted right by pos (SHR)
-    */
-    inline bitvector operator>> (size_t pos) const {
-        return (bitvector(*this) >>= pos);
-    }
-
-
-    /*!
-    \brief Inversion operator overload
-    \return copy of bitvector with all bits flipped
-    \note \b Complexity: linear O(size()/bpw) bitwise operations
-    */
-    inline bitvector operator~() const {
-        return bitvector(*this).flip();
-    }
-
-
-private:
-    storage_t __m_storage;
 };
 
+
+
+
+
+//
+// Contructors and destructor
+//
+
 /*!
-\brief Equality comparison bit-vector operator overload
-\param lhs first bitvector
-\param rhs second bitvector
-\return true if lhs is equal to rhs, otherwise return false 
-\note \b Complexity: linear O(size()/bpw) comparison operations at worst case
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bool operator== (const bitvector<_Word, _Allocator>& lhs,
-                        const bitvector<_Word, _Allocator>& rhs) {
+ * \brief Default constructor
+ *
+ * Constructs an empty bit vector
+ * \note \b Complexity: constant O(1)
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector() :
+    storage_type()
+{
+}
+
+/*!
+ * \brief Copy constructor
+ * Constructs a bit vector by coping data from other.
+ * \param other const bit vector reference to copy from
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const bitvector& other) :
+    storage_type(other)
+{
+}
+
+/*!
+ * \brief Move contructor
+ * Constructs a bit vector by moving data from other.
+ * \param other bit vector rvalue reference to move from
+ * \note \b Complexity: constant O(1)
+ */
+/*template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(bitvector&& other) {
+    static_cast<storage_type*>(this)->move(static_cast<storage_type&&>(other));
+}*/
+
+/*!
+ * \brief Parametized constructor
+ * Constructs an empty bit vector.
+ * \param al allocator const reference
+ * \note \b Complexity: constant O(1)
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const _Alloc &al) :
+    storage_type(al)
+{
+}
+
+/*!
+ * \brief Parametized constructor
+ * Construct a bitvector with size n bits initialized with value on.
+ * \param n  number of bits in vector
+ * \param on bits initialization value (0 by default)
+ * \param al allocator const reference
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(size_type n, bool on, const _Alloc& al) :
+    storage_type(al)
+{
+    this->assign(n, on);
+}
+
+/*!
+ * \brief Parametized constructor
+ *
+ * Assign bits from array pointed by pointer p.
+ *
+ * Optional nbits argument regulates number of bits to copy from
+ * source array. The default value of 0 means that all bits from
+ * source array must be copied, so actual size of bitvector becomes
+ * pn * bpw. If nbits is greater than 0 than coping process stops
+ * when number of elemens is exhaused in array p is exhaused or
+ * desired number of bits was reached, whichever comes first.
+ * \note If number of elements in array pointed by pn is less than
+ * desired number of bits an std::logic_error is throw.
+ * \param p     pointer to first input word
+ * \param pn    number of words pointer by first
+ * \param nbits desired number of bits in vector (default 0, that means all bits in all words)
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const_pointer p, size_t pn, size_t nbits, const _Alloc &al) :
+    storage_type(al)
+{
+    this->assign(p, pn, nbits);
+}
+
+/*!
+ * \brief Parametized constructor
+ *
+ * Construct a bitvector from initializer list of boolean values
+ *
+ * \note the initilaizer list processed in a reverse
+ * order, that results in natural order of bits on
+ * little-endian processor.
+ * \param ilist initializer list
+ * \param al    allocator const reference
+ * \note \b Complexity: linear O(N) bit assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::bitvector(std::initializer_list<bool> ilist, const _Alloc& al) :
+    storage_type(al)
+{
+    this->assign(ilist);
+}
+
+// TODO: think how we can implement this efficently?
+/*
+template<class _Word, size_t _Opt, class _Alloc>
+template<class _InIt>
+bitvector<_Word, _Opt, _Alloc>::bitvector(_InIt first, _InIt last, size_t nbits, const _Alloc& al) :
+    storage_type(al)
+{
+}*/
+
+/*!
+ * \brief Parametized constructor
+ *
+ * Construct a bitvector from range of bit iterators
+ * \param first first range iterator
+ * \param last  last range iterator
+ * \param al    allocator const reference
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<class _Wx, bool _IsConst>
+bitvector<_Word, _Opt, _Alloc>::bitvector(
+          bit_iterator<_Wx, _IsConst> first,
+          bit_iterator<_Wx, _IsConst> last,
+          const _Alloc& al) :
+    storage_type(al)
+{
+    this->assign(first, last);
+}
+
+/*!
+ * \brief Copy constrcutor
+ * Constructs a bit vector by coping data from other.
+ * \param other source bitvector
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<class _Wx, size_t _Tag, class _Al>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const bitvector<_Wx, _Tag, _Al>& other) :
+    storage_type()
+{
+    const_iterator first(reinterpret_cast<const_pointer>(other.data()), 0);
+    this->assign(first, first + other.size());
+}
+
+/*!
+ * \brief Copy constrcutor
+ * Constructs a bit vector by coping data from bitset bits.
+ * \param bits bitset const reference
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<size_t N, class _Wx>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const stdx::bitset<N, _Wx>& bits)
+{
+    this->assign(bits.begin(), bits.end());
+}
+
+
+/*!
+ * \brief Copy constrcutor
+ * Constructs a bit vector by coping data from bitset bits.
+ * \param bits bitset const reference
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<size_t N>
+bitvector<_Word, _Opt, _Alloc>::bitvector(const std::bitset<N>& bits)
+{
+    this->resize(N, false);
+    for (size_t i = 0; i < bits.size(); ++i) {
+        this->set(i, bits.test(i));
+    }
+}
+
+
+
+//
+// Destructor
+//
+
+
+/*!
+ * \brief Destructor
+ *
+ * Destroy the bitvector and release all occupied resources.
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>::~bitvector()
+{
+}
+
+/*!
+ * \brief Bits assignmet
+ *
+ * Assign n bits initilized with value on
+ * \param n number of desired bits in bit vector
+ * \param on value to initialize bits (defualt is 0)
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+void bitvector<_Word, _Opt, _Alloc>::assign(size_t n, bool on)
+{
+    this->resize(n, on);
+}
+
+/*!
+ * \brief Bits assignmet
+ *
+ * Assign bits from array pointed by pointer p.
+ *
+ * Optional nbits argument regulates number of bits to copy from
+ * source array. The default value of 0 means that all bits from
+ * source array must be copied, so actual size of bitvector becomes
+ * pn * bpw. If nbits is greater than 0 than coping process stops
+ * when number of elemens is exhaused in array p is exhaused or
+ * desired number of bits was reached, whichever comes first.
+ * \note If number of elements in array pointed by pn is less than
+ * desired number of bits an std::logic_error is throw.
+ * \param p     pointer to first input word
+ * \param pn    number of words pointer by first
+ * \param nbits desired number of bits in vector (default 0, that means all bits in all words)
+ * \note \b Complexity: linear O(N) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+void bitvector<_Word, _Opt, _Alloc>::assign(const_pointer p, size_t pn, size_t nbits)
+{
+    if (nbits == 0) {
+        nbits = (pn * traits_type::bpw);
+    } else {
+        __stdx_assert((pn * traits_type::bpw) >= traits_type::bit_space(nbits), std::logic_error);
+    }
+    this->__resize(nbits);
+    const_iterator first(p, 0);
+    stdx::copy_n(first, nbits, this->begin());
+}
+
+// TODO: think how we can implement this efficently?
+/*template<class _InIt>
+bitvector& assign(_InIt first, _InIt last, size_t nbits = 0);*/
+
+
+/*!
+ * \brief Bits assignmet
+ *
+ * Assign bits from initializer list of boolean values.
+ *
+ * \note the initilaizer list processed in a reverse
+ * order, that results in natural order of bits on
+ * little-endian processor.
+ * \param ilist initializer list
+ * \param al    allocator const reference
+ * \note \b Complexity: linear O(N) bit assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+void bitvector<_Word, _Opt, _Alloc>::assign(std::initializer_list<bool> ilist)
+{
+    if (ilist.size() == 0)
+        return;
+
+    this->__resize(ilist.size());
+    size_t i = 0;
+    for (auto it = ilist.end()-1; it >= ilist.begin(); --it, ++i) {
+        this->set(i, *it);
+    }
+    this->__sanitize_bits();
+}
+
+/*!
+ * \brief Bits assignment
+ *
+ * Assign from range of bit iterators
+ * \param first first range iterator
+ * \param last  last range iterator
+ * \param al    allocator const reference
+ * \note \b Complexity: linear O(N/bpw) assignments
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<class _Wx, bool _IsConst>
+void bitvector<_Word, _Opt, _Alloc>::assign(bit_iterator<_Wx, _IsConst> first,
+                                            bit_iterator<_Wx, _IsConst> last)
+{
+    typedef typename std::conditional<
+            _IsConst, const uint8_t*, uint8_t*
+    >::type srcptr_t;
+    typedef uint8_t* dstptr_t;
+
+    size_t n = std::distance(first, last);
+    this->__resize(n);
+    stdx::bit_iterator<uint8_t, _IsConst>  source(reinterpret_cast<srcptr_t>(first.base()), first.pos());
+    stdx::bit_iterator<uint8_t, false>     target(reinterpret_cast<dstptr_t>(this->data()), 0);
+    stdx::copy_n(source, n, target);
+}
+
+/*!
+ * \brief Get an internal allocator
+ * \return allocator used by this bit vector
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::allocator_type
+bitvector<_Word, _Opt, _Alloc>::get_allocator() const {
+    return static_cast<const storage_type*>(this)->get_allocator();
+}
+
+/*!
+ * \brief Swap this bitvector with other
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+void bitvector<_Word, _Opt, _Alloc>::swap(bitvector& other)
+{
+    if (&other == this)
+        return; // attempt to swap with self
+
+    static_cast<storage_type*>(this)->swap(static_cast<storage_type&>(other));
+}
+
+//
+// Assignment and move operators
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<class _Wx, size_t _Tag, class _Al>
+bitvector<_Word, _Opt, _Alloc>& bitvector<_Word, _Opt, _Alloc>::operator= (const bitvector<_Wx, _Tag, _Al>& other)
+{
+    if (&other == this)
+        return (*this); // escape self-assignment
+
+    this->assign(other.begin(), other.end());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>& bitvector<_Word, _Opt, _Alloc>::operator= (std::initializer_list<bool> ilist)
+{
+    this->assign(ilist);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>& bitvector<_Word, _Opt, _Alloc>::operator= (const bitvector& other)
+{
+    if (&other == this)
+        return (*this); // escape self-assignment
+    this->assign(other.begin(), other.end());
+    return (*this);
+}
+
+/*!
+ *
+ */
+/*template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>& bitvector<_Word, _Opt, _Alloc>::operator= (bitvector&& other)
+{
+    if (std::addressof(other) == this)
+        return (*this); // escape self-move
+
+    return this->move(static_cast<storage_type>(other));
+}*/
+
+
+
+
+//
+// Iterators
+//
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::begin() { return iterator(this->data(), 0); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::end() { return (begin() += this->size()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_iterator
+bitvector<_Word, _Opt, _Alloc>::begin() const { return const_iterator(this->data(), 0); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_iterator
+bitvector<_Word, _Opt, _Alloc>::end() const { return (begin() += this->size()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_iterator
+bitvector<_Word, _Opt, _Alloc>::cbegin() const { return const_iterator(this->data(), 0); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_iterator
+bitvector<_Word, _Opt, _Alloc>::cend() const { return (cbegin() += this->size()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::rbegin() { return reverse_iterator(end()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::rend() { return reverse_iterator(begin()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::rbegin() const { return const_reverse_iterator(end()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::rend() const { return const_reverse_iterator(begin()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::crbegin() const { return const_reverse_iterator(end()); }
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::const_reverse_iterator
+bitvector<_Word, _Opt, _Alloc>::crend() const { return const_reverse_iterator(begin()); }
+
+
+//
+// Memory management
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+template<bool _IsConst>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::insert(const_iterator pos,
+                bit_iterator<_Word, _IsConst> beg,
+                bit_iterator<_Word, _IsConst> end)
+{
+    if (beg == end)
+        return (this->begin() + (pos - this->begin()));
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(pos >= this->begin() && pos <= end(), std::out_of_range);
+
+    size_t offset = pos - this->begin();
+    size_t s = this->size();
+    size_t n = std::distance(beg, end);
+    size_t length = s + n;
+    if ( length > this->max_size() ) {
+        throw std::length_error("maximum vector size exceeded");
+    }
+
+    this->resize(length);  // pos is invalidated after resize
+    iterator first = this->begin();
+    iterator result = first + offset;
+    if (offset != s)
+        stdx::copy(result, first + s, result + count);
+    stdx::copy(beg, end, result);
+    return result;
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::insert(const_iterator pos,
+                                       size_type count,
+                                       bool value)
+{
+    if (count == 0)
+        return (this->begin() + (pos - this->cbegin()));
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(pos >= this->begin() && pos <= end(), std::out_of_range);
+
+    size_t offset = pos - this->cbegin();
+    size_t s = this->size();
+    size_t n = s + count;
+    if ( n > this->max_size()) {
+        throw std::length_error("maximum vector size exceeded");
+    }
+
+    this->__resize(n); // pos is invalidated after resize
+
+    iterator first = this->begin();
+    iterator result = first + offset;
+    stdx::copy(result, first + s, result + n);
+    stdx::fill_n(result, count, value);
+    return result;
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::insert(const_iterator pos,
+                                       std::initializer_list<bool> ilist)
+{
+    if (ilist.size() == 0)
+        return (this->begin() + (pos - this->cbegin()));
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(pos >= this->begin() && pos <= end(), std::out_of_range);
+
+    size_t offset = pos - this->cbegin();
+    size_t s = this->size();
+    size_t n = ilist.size();
+    size_t length = s + n;
+    if ( length > this->max_size() ) {
+        throw std::length_error("maximum vector size exceeded");
+    }
+
+    this->__resize(length);  // pos is invalidated after resize
+    iterator first = this->begin();
+    iterator result = first + offset;
+    if (offset != s) {
+        stdx::copy(result, first + s, result + n);
+    }
+
+    s = offset;
+    for (auto it = ilist.end()-1; it >= ilist.begin(); --it, ++s) {
+        this->set(s, *it);
+    }
+    return result;
+}
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::erase(const_iterator first, const_iterator last)
+{
+    return erase(first, std::distance(first, last));
+}
+
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::iterator
+bitvector<_Word, _Opt, _Alloc>::erase(const_iterator pos, size_t n)
+{
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(pos != this->cend() && ((std::distance(this->cbegin(), pos) + n) < size(), std::out_of_range);
+
+    size_t i = std::distance(this->cbegin(), pos);
+    auto ppos = stdx::copy(pos + n, this->cend(), this->begin() + i);
+    this->__resize(std::distance(this->begin(), ppos));
+    return this->begin() + (i + n);
+}
+
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+void bitvector<_Word, _Opt, _Alloc>::resize(size_t nbits, bool on)
+{
+    size_t n = this->size();
+    if (n == nbits)
+        return;
+
+    this->__resize(nbits);
+    if (nbits > n) {
+        stdx::fill(this->begin() + n, end(), on);
+    }
+}
+
+//
+// Observers
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::size_type
+bitvector<_Word, _Opt, _Alloc>::max_size() const
+{
+    return storage_type::max_bits;
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::size_type
+bitvector<_Word, _Opt, _Alloc>::nblocks() const {
+    return traits_type::bit_space(this->size());
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::size_type
+bitvector<_Word, _Opt, _Alloc>::capacity() const {
+    return (nblocks() * bpw);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::empty() const {
+    return (this->size() == 0);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename bitvector<_Word, _Opt, _Alloc>::size_type
+bitvector<_Word, _Opt, _Alloc>::count(bool on) const {
+    return stdx::count(cbegin(), cend(), on);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+double bitvector<_Word, _Opt, _Alloc>::density() const {
+    size_type n = this->size();
+    return (n != 0 ? (this->count() / static_cast<double>(n)) : 0.0);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::all() const {
+    size_type n = this->size();
+    return (stdx::detail::__count_bool_true(this->begin(), n) == n);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::any() const {
+    return (stdx::detail::__find_bool_true(this->begin(), this->size()) != this->end());
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::none() const {
+    return (!any());
+}
+
+
+//
+// Bit-level access
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+typename  bitvector<_Word, _Opt, _Alloc>::reference
+bitvector<_Word, _Opt, _Alloc>::operator[](size_t pos) {
+    return reference(*(this->data() + traits_type::block_index(pos)),
+                     (word_type)traits_type::bit_mask(pos));
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::operator[](size_t pos) const {
+    return this->test(pos);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::test(size_type pos) const {
+    return traits_type::test_bit_unchecked(this->data(), pos);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::at(size_type pos) const {
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(pos < size(), std::out_of_range);
+    return this->test(pos);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::set(size_type pos, bool on) {
+    traits_type::set_bit_unchecked(this->data(), pos, on);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::set() {
+    stdx::detail::__fill_n_true(this->begin(), this->size());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::reset(size_type pos) {
+    traits_type::clear_bit_unchecked(this->data(), pos);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::reset() {
+    stdx::detail::__fill_n_false(this->begin(), this->size());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::flip(size_type pos) {
+    traits_type::flip_bit_unchecked(this->data(), pos);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::flip() {
+    stdx::detail::__flip_inplace(this->begin(), this->end());
+    return (*this);
+}
+
+
+
+
+//
+// Set-relational operations
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::contains(const bitvector& other)
+{
+    if (&other == this)
+        return true;
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assert(other.size() == this->size(), std::logic_error);
+    const_pointer first1 = this->data();
+    const_pointer last1 = this->data() + this->nblocks();
+    const_pointer first2 = other.data();
+    for (; first1 != last1; ++first1) {
+        if ((*first1) & ~(*first2))
+            return false;
+    }
+    return true;
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bool bitvector<_Word, _Opt, _Alloc>::intersects(const bitvector& other)
+{
+    if (&other == this)
+        return true;
+
+    size_type n = (std::min)(this->nblocks(), other.nblocks());
+    const_pointer first1 = this->data();
+    const_pointer last1 = this->data() + n;
+    const_pointer first2 = other.data();
+    for (; first1 != last1; ++first1) {
+        if ((*first1) & (*first2))
+            return true;
+    }
+    return false;
+}
+
+
+
+//
+// Bit-level access operations (in class definitions)
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator~ ()
+{
+    return bitvector(*this).flip();
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator&= (const bitvector& other)
+{
+    if (&other == this)
+        return (*this);
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
+
+    // this code relies on auto-vectorization
+    stdx::transform(cbegin(), cend(), other.begin(), begin(), std::bit_and<word_type>());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator|= (const bitvector& other)
+{
+    if (&other == this)
+        return (*this);
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
+
+    // this code relies on auto-vectorization
+    stdx::transform(cbegin(), cend(), other.begin(), begin(), std::bit_or<word_type>());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator^= (const bitvector& other)
+{
+    if (&other == this)
+        return reset();
+
+    // FIXME: don't forget to uncomment me!
+    //__stdx_assertx(other.size() == size(), std::range_error, "incorrect range");
+
+    // this code relies on auto-vectorization
+    stdx::transform(cbegin(), cend(), other.begin(), begin(), std::bit_xor<word_type>());
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator<<= (size_type pos)
+{
+    this->__bitwise_shl(pos);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>&
+bitvector<_Word, _Opt, _Alloc>::operator>>= (size_type pos)
+{
+    this->__bitwise_shr(pos);
+    return (*this);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>
+bitvector<_Word, _Opt, _Alloc>::operator<< (size_type pos)
+{
+    return (bitvector(*this) <<= pos);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Opt, class _Alloc>
+bitvector<_Word, _Opt, _Alloc>
+bitvector<_Word, _Opt, _Alloc>::operator>> (size_type pos)
+{
+    return (bitvector(*this) >>= pos);
+}
+
+
+//
+// Bit-level access operations (out of class definitions)
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Tag, class _Alloc>
+inline bitvector<_Word, _Tag, _Alloc> operator& (const bitvector<_Word, _Tag, _Alloc>& lhs,
+                                                 const bitvector<_Word, _Tag, _Alloc>& rhs)
+{
+    bitvector<_Word, _Tag, _Alloc> result(lhs);
+    return (result &= rhs);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Tag, class _Alloc>
+inline bitvector<_Word, _Tag, _Alloc> operator| (const bitvector<_Word, _Tag, _Alloc>& lhs,
+                                                 const bitvector<_Word, _Tag, _Alloc>& rhs)
+{
+    bitvector<_Word, _Tag, _Alloc> result(lhs);
+    return (result |= rhs);
+}
+
+/*!
+ *
+ */
+template<class _Word, size_t _Tag, class _Alloc>
+inline bitvector<_Word, _Tag, _Alloc> operator^ (const bitvector<_Word, _Tag, _Alloc>& lhs,
+                                                 const bitvector<_Word, _Tag, _Alloc>& rhs)
+{
+    bitvector<_Word, _Tag, _Alloc> result(lhs);
+    return (result ^= rhs);
+}
+
+
+//
+// Comparison
+//
+
+/*!
+ *
+ */
+template<class _Word, size_t _Tag, class _Alloc>
+inline bool operator== (const bitvector<_Word, _Tag, _Alloc>& lhs,
+                        const bitvector<_Word, _Tag, _Alloc>& rhs)
+{
+    if (&lhs == &rhs)
+        return true;
     return stdx::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 /*!
-\brief Non-equality comparison bit-vector operator overload
-\param lhs first bitvector
-\param rhs second bitvector
-\return true if lhs is not equal to rhs, otherwise return false
-\note \b Complexity: linear O(size()/bpw) comparison operations at worst case
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bool operator!= (const bitvector<_Word, _Allocator>& lhs,
-                        const bitvector<_Word, _Allocator>& rhs) {
+ *
+ */
+template<class _Word, size_t _Tag, class _Alloc>
+inline bool operator!= (const bitvector<_Word, _Tag, _Alloc>& lhs,
+                        const bitvector<_Word, _Tag, _Alloc>& rhs)
+{
     return (!(lhs == rhs));
 }
 
-/*!
-\brief Bitwise OR binary operator overload
-\param lhs first bitvector
-\param rhs second bitvector
-\return bitvector holding result of OR operation upon lhs and rhs bitvectors
-\note \b Complexity: linear O(size()/bpw) assignments and O(size()/bpw) bitwise operations
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bitvector<_Word, _Allocator> operator| (const bitvector<_Word, _Allocator>& lhs,
-                                               const bitvector<_Word, _Allocator>& rhs)
-{
-    bitvector<_Word, _Allocator> res(lhs);
-    res |= rhs;
-    return res;
-}
+
+//
+// Stream serialization
+//
 
 /*!
-\brief Bitwise XOR binary operator overload
-\param lhs first bitvector
-\param rhs second bitvector
-\return bitvector holding result of XOR operation upon lhs and rhs bitvectors
-\note \b Complexity: linear O(size()/bpw) assignments and O(size()/bpw) bitwise operations
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bitvector<_Word, _Allocator> operator^ (const bitvector<_Word, _Allocator>& lhs,
-                                               const bitvector<_Word, _Allocator>& rhs)
+ *
+ */
+template<class _Char, class _Traits, class _Word, size_t _Tag, class _Alloc>
+inline std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& stream,
+                                                      const bitvector<_Word, _Tag, _Alloc>& bits)
 {
-    bitvector<_Word, _Allocator> res(lhs);
-    res ^= rhs;
-    return res;
+    return stdx::detail::__to_stream(bits.begin(), bits.end(), stream);
 }
 
-
-/*!
-\brief Bitwise AND binary operator overload
-\param lhs first bitvector
-\param rhs second bitvector
-\return bitvector holding result of AND operation upon lhs and rhs bitvectors
-\note \b Complexity: linear O(size()/bpw) assignments and O(size()/bpw) bitwise operations
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bitvector<_Word, _Allocator> operator& (const bitvector<_Word, _Allocator>& lhs,
-                                               const bitvector<_Word, _Allocator>& rhs)
-{
-    bitvector<_Word, _Allocator> res(lhs);
-    res &= rhs;
-    return res;
-}
-
-
-/*!
-\brief Bitwise AND-NOT binary operator overload
-\param lhs  first bitvector
-\param rhs second bitvector
-\return bitvector holding result of AND-NOT operation upon lhs and rhs bitvectors
-\note \b Complexity: linear O(size()/bpw) assignments and O(size()/bpw) bitwise operations
-\relates bitvector
-*/
-template<
-        typename _Word,
-        typename _Allocator
-        >
-inline bitvector<_Word, _Allocator> operator- (const bitvector<_Word, _Allocator>& lhs, 
-                                               const bitvector<_Word, _Allocator>& rhs)
-{
-    bitvector<_Word, _Allocator> res(lhs);
-    res -= rhs;
-    return res;
-}
+_STDX_END // end namespace stdx
 
 
 
+namespace std {
 
-
-_STDX_END
-
-namespace std
-{
-
-
-    /*!
-    \brief stream output operator overload
-
-    Output bits in bitvector in human-readable format.
-
-    \param stream reference to output stream
-    \param bits target bitvector
-    \return reference to output stream
-    \relates bitvector
-    */
-    template<
-            typename _OStream,
-            typename _Word,
-            typename _Allocator
-            >
-    inline _OStream& operator<< (_OStream& stream, const stdx::bitvector<_Word, _Allocator>& bits)
+    /// std::hash specialization for bitvector.
+    template<class _Word, size_t _Tag, class _Alloc>
+    struct hash< stdx::bitvector<_Word, _Tag, _Alloc> >
     {
-        // pre-builded table for 8 bit words of human-readable string representation
-        static constexpr const char* const bin_str[] = {
-            "00000000","00000001","00000010","00000011","00000100","00000101","00000110","00000111",
-            "00001000","00001001","00001010","00001011","00001100","00001101","00001110","00001111",
-            "00010000","00010001","00010010","00010011","00010100","00010101","00010110","00010111",
-            "00011000","00011001","00011010","00011011","00011100","00011101","00011110","00011111",
-            "00100000","00100001","00100010","00100011","00100100","00100101","00100110","00100111",
-            "00101000","00101001","00101010","00101011","00101100","00101101","00101110","00101111",
-            "00110000","00110001","00110010","00110011","00110100","00110101","00110110","00110111",
-            "00111000","00111001","00111010","00111011","00111100","00111101","00111110","00111111",
-            "01000000","01000001","01000010","01000011","01000100","01000101","01000110","01000111",
-            "01001000","01001001","01001010","01001011","01001100","01001101","01001110","01001111",
-            "01010000","01010001","01010010","01010011","01010100","01010101","01010110","01010111",
-            "01011000","01011001","01011010","01011011","01011100","01011101","01011110","01011111",
-            "01100000","01100001","01100010","01100011","01100100","01100101","01100110","01100111",
-            "01101000","01101001","01101010","01101011","01101100","01101101","01101110","01101111",
-            "01110000","01110001","01110010","01110011","01110100","01110101","01110110","01110111",
-            "01111000","01111001","01111010","01111011","01111100","01111101","01111110","01111111",
-            "10000000","10000001","10000010","10000011","10000100","10000101","10000110","10000111",
-            "10001000","10001001","10001010","10001011","10001100","10001101","10001110","10001111",
-            "10010000","10010001","10010010","10010011","10010100","10010101","10010110","10010111",
-            "10011000","10011001","10011010","10011011","10011100","10011101","10011110","10011111",
-            "10100000","10100001","10100010","10100011","10100100","10100101","10100110","10100111",
-            "10101000","10101001","10101010","10101011","10101100","10101101","10101110","10101111",
-            "10110000","10110001","10110010","10110011","10110100","10110101","10110110","10110111",
-            "10111000","10111001","10111010","10111011","10111100","10111101","10111110","10111111",
-            "11000000","11000001","11000010","11000011","11000100","11000101","11000110","11000111",
-            "11001000","11001001","11001010","11001011","11001100","11001101","11001110","11001111",
-            "11010000","11010001","11010010","11010011","11010100","11010101","11010110","11010111",
-            "11011000","11011001","11011010","11011011","11011100","11011101","11011110","11011111",
-            "11100000","11100001","11100010","11100011","11100100","11100101","11100110","11100111",
-            "11101000","11101001","11101010","11101011","11101100","11101101","11101110","11101111",
-            "11110000","11110001","11110010","11110011","11110100","11110101","11110110","11110111",
-            "11111000","11111001","11111010","11111011","11111100","11111101","11111110","11111111"
-        };
-
-        typedef stdx::bit_traits<uint8_t> traits_type;
-
-        size_t n = bits.size(); // total number of bits
-        if (n == 0) // nothing to output
-            return (stream);
-
-        size_t d = traits_type::bit_index(n); // number of meanful trailing bits
-        size_t offset = (d > 0 ? (traits_type::bpw - d) : 0); // offset in string
-        size_t length = (d > 0 ? d : traits_type::bpw); // length of string
-
-        // pointer to first char in bit-vector
-        const uint8_t* first = reinterpret_cast<const uint8_t*>(bits.data());
-        // move pointer to last char
-        const uint8_t* it = first + (traits_type::bit_space(n) - 1);
-
-        // write part of string (output d bits at once)
-        stream.write((bin_str[*it] + offset), length);
-        --it;
-
-        // process 8 bits at once in reverse order
-        // so we do not need to care about alignment
-        for (; it >= first; --it) {
-            stream << bin_str[*it];
+        size_t operator()(const stdx::bitvector<_Word, _Tag, _Alloc>& bits) const noexcept
+        {
+            static const std::size_t __S_seed = static_cast<size_t>(0xc70f6907UL);
+            return std::_Hash_bytes(bits.data(), bits.nblocks(), __S_seed);
         }
-        stream << std::flush; // flush the stream, if any
-        return (stream);
-    }
-
-
+    };
 }
 

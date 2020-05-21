@@ -21,8 +21,8 @@ void BM_bitvector_copy(benchmark::State& state)
     stdx::bitvector<> x(_MAX_BITS);
     stdx::bitvector<> y(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
-    std::generate_n(y.data(), y.blocks(), [&]() { return distr(rnd); });
+    stdx::generate(x.begin(), x.end(), [&]() { return distr(rnd); } );
+    stdx::generate(y.begin(), y.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state) {
         state.PauseTiming();
@@ -75,8 +75,8 @@ void BM_bitvector_flip(benchmark::State& state)
         size_t first = (rand() % (_MAX_BITS / 2));
         size_t second = (rand() % (_MAX_BITS / 2));
         state.ResumeTiming();
-        stdx::flip(x.begin() + first, x.begin() + (first + (_MAX_BITS / 2 - 1)),
-                             y.begin() + second);
+        stdx::flip_range(x.begin() + first, x.begin() + (first + (_MAX_BITS / 2 - 1)),
+                         y.begin() + second);
         benchmark::DoNotOptimize(x);
         benchmark::DoNotOptimize(y);
     }
@@ -90,7 +90,7 @@ void BM_bitvector_shifts(benchmark::State& state)
     stdx::bitvector<> x(_MAX_BITS);
     std::mt19937_64 rnd;
     std::uniform_int_distribution<stdx::bitvector<>::word_type> distr;
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    stdx::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state) {
          x >>= rand() % (_MAX_BITS / 2);
@@ -189,7 +189,7 @@ void BM_bitvector_reverse_aligned(benchmark::State& state)
 
     stdx::bitvector<uint64_t> x(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -206,7 +206,7 @@ void BM_bitvector_reverse_unaligned(benchmark::State& state)
 
     stdx::bitvector<uint64_t> x(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -225,7 +225,7 @@ void BM_bitvector_reverse_aligned_std(benchmark::State& state)
 
     stdx::bitvector<uint64_t> x(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -242,7 +242,7 @@ void BM_bitvector_reverse_unaligned_std(benchmark::State& state)
 
     stdx::bitvector<uint64_t> x(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -263,8 +263,8 @@ void BM_bitvector_equal_unaligned(benchmark::State& state)
     stdx::bitvector<> x(_MAX_BITS);
     stdx::bitvector<> y(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
-    std::generate_n(y.data(), y.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
+    std::generate(y.begin(), y.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -292,8 +292,8 @@ void BM_bitvector_equal_aligned(benchmark::State& state)
     stdx::bitvector<> x(_MAX_BITS);
     stdx::bitvector<> y(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
-    std::generate_n(y.data(), y.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
+    std::generate(y.begin(), y.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -320,8 +320,8 @@ void BM_bitvector_equal_single(benchmark::State& state)
     stdx::bitvector<> x(_MAX_BITS);
     stdx::bitvector<> y(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
-    std::generate_n(y.data(), y.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
+    std::generate(y.begin(), y.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {
@@ -347,7 +347,7 @@ void BM_bitvector_equal_inplace(benchmark::State& state)
 
     stdx::bitvector<> x(_MAX_BITS);
 
-    std::generate_n(x.data(), x.blocks(), [&]() { return distr(rnd); });
+    std::generate(x.begin(), x.end(), [&]() { return distr(rnd); });
 
     for (auto _ : state)
     {

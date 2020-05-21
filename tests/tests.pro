@@ -9,7 +9,8 @@ DEPENDPATH += ../ ../catch
 INCLUDEPATH += ../ ../catch
 OBJECTS_DIR = ../build/tests/obj
 
-LIBS += -lpthread -lasan
+LIBS += -lasan
+LIBS += -lpthread
 
 #QMAKE_CXXFLAGS += -O1 -m64 -msse4.2 -g -fno-omit-frame-pointer -Wall -Wextra
 QMAKE_CXXFLAGS += -fno-omit-frame-pointer -Wall -Wextra

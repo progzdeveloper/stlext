@@ -45,10 +45,6 @@ HEADERS += \
     allocators/memory_storage.hpp \
     allocators/ordered_arena.hpp \
     allocators/pooled_object.hpp \
-    bitvector/bit_iterator.hpp \
-    bitvector/bit_storage.hpp \
-    bitvector/bit_traits.hpp \
-    bitvector/bitvector.hpp \
     compability/cxx11/all_of.hpp \
     compability/cxx11/any_of.hpp \
     compability/cxx11/copy_if.hpp \
@@ -162,5 +158,16 @@ HEADERS += \
     bfc/counting_bloom_filter.hpp \
     bfc/scalable_bloom_filter.hpp \
     bfc/compressed_bloom_filter.hpp \
-    bfc/bfc_utilities.h
+    bfc/bfc_utilities.h \
+    bitvector/bitalgo.hpp \
+    bitvector/bititerator.hpp \
+    bitvector/bitpack.hpp \
+    bitvector/bitset.hpp \
+    bitvector/bitstorage.hpp \
+    bitvector/bittraits.hpp \
+    bitvector/bitvector.hpp \
+    bitvector/bitview.hpp \
+    bitvector/bitalgo.hxx
+
+SOURCES +=
 
