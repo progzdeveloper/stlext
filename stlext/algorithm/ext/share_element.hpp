@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Michael Polukarov (Russia).
+// Copyright (c) 2020, Michael Polukarov (Russia).
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -29,21 +29,42 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <functional>
+#ifdef _STDX_DEBUG
+#include <algorithm>
+#include <cassert>
+#endif
 
-// experimental algorithms
-#include "ext/slide.hpp"
-#include "ext/gather.hpp"
-#include "ext/share_element.hpp"
-#include "ext/is_unique.hpp"
-#include "ext/distances.hpp"
-#include "ext/simplify.hpp"
+#include "../../platform/common.h"
 
-#include "ext/stralgo.hpp"
-#include "ext/split.hpp"
-#include "ext/regex_split.hpp"
-#include "ext/join.hpp"
+_STDX_BEGIN
 
+template<class _FwdIt1, class _FwdIt2, class _Comp>
+bool share_element(_FwdIt1 first1, _FwdIt1 last1, _FwdIt2 first2, _FwdIt2 last2, _Comp comp)
+{
+#ifdef _STDX_DEBUG
+    assert(std::is_sorted(first1, last1) && std::is_sorted(first2, last2));
+#endif
 
+    while (first1 != last1 && first2 != last2)
+    {
+        if (comp(*first1, *first2)) {
+            ++first1;
+        }
+        else if (comp(*first2, *first1)) {
+            ++first2;
+        }
+        else  {
+            return true;
+        }
+    }
+    return false;
+}
 
-#include "ext/majority_element.hpp"
-#include "ext/kadane.hpp"
+template<class _FwdIt1, class _FwdIt2>
+bool share_element(_FwdIt1 first1, _FwdIt1 last1, _FwdIt2 first2, _FwdIt2 last2)
+{
+    return share_element(first1, last1, first2, last2, std::less<>{});
+}
+
+_STDX_END

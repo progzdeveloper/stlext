@@ -189,6 +189,19 @@ TEST_CASE("algorithms/is_unique", "[algorithm.experimental]")
 }
 
 
+TEST_CASE("algorithms/share_element", "[algorithm.experimental]")
+{
+    bool has_shared = false;
+    std::vector<int> s1 = { -8,  -5,  -1,  0,  3,  5,  7, 8, 9 };
+    std::vector<int> s2 = { -19, -17, -9, -6, -4, -3, -2, 0, 2 };
+    std::vector<int> s3 = { -19, -17, -9, -6, -4, -3, -2, 1, 2 };
+    has_shared = stdx::share_element(s1.begin(), s1.end(), s2.begin(), s2.end());
+    REQUIRE(has_shared);
+
+    has_shared = stdx::share_element(s1.begin(), s1.end(), s3.begin(), s3.end());
+    REQUIRE(!has_shared);
+}
+
 
 TEST_CASE("algorithms/kadane_sum", "[algorithm.experimental]")
 {
@@ -313,4 +326,5 @@ TEST_CASE("algorithms/regex_split", "[algorithm.experimental]")
 	results.clear();
 
 }
+
 
