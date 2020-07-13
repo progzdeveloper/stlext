@@ -268,10 +268,10 @@ namespace compact
             }*/
 
             T* space = __allocate(__size);
-            T* it = std::copy(ptr, const_cast<T*>(where), space);
+            T* it = std::uninitialized_copy(ptr, const_cast<T*>(where), space);
             T* pos = it;
-            it = std::copy_n(first, n, it);
-            std::copy(const_cast<T*>(where), ptr + s, it);
+            it = std::uninitialized_copy_n(first, n, it);
+            std::uninitialized_copy(const_cast<T*>(where), ptr + s, it);
 
             __destroy_range(ptr, ptr + s);
             __deallocate(ptr, s);
@@ -300,10 +300,10 @@ namespace compact
             }*/
 
             T* space = __allocate(__size);
-            T* it = std::copy(ptr, const_cast<T*>(where), space);
+            T* it = std::uninitialized_copy(ptr, const_cast<T*>(where), space);
             T* pos = it;
-            it = std::fill_n(it, n, v);
-            std::copy(const_cast<T*>(where), ptr + s, it);
+            it = std::uninitialized_fill_n(it, n, v);
+            std::uninitialized_copy(const_cast<T*>(where), ptr + s, it);
 
             __destroy_range(ptr, ptr + s);
             __deallocate(ptr, s);
@@ -360,7 +360,7 @@ namespace compact
             }
 
             T* space = __allocate(n);
-            std::fill_n(space, n, val);
+            std::uninitialized_fill_n(space, n, val);
 
             // deallocate old storage if any
             __destroy_range(ptr, ptr + s);
