@@ -237,10 +237,11 @@ namespace compact
                 return nullptr;
             } else {
                 T* space = __allocate(__size);
-                T* mid = std::copy(ptr, const_cast<T*>(where), space);
-                std::copy(const_cast<T*>(where + n), ptr + s, mid);
+                T* mid = std::move(ptr, const_cast<T*>(where), space);
+                std::move(const_cast<T*>(where + n), ptr + s, mid);
 
-                __destroy_range(ptr, ptr + s);
+                // ???
+                //__destroy_range(ptr, ptr + s);
                 __deallocate(ptr, s);
 
                 this->__m_data.addr = reinterpret_cast<uint64_t>(space) & ptr_mask;
@@ -380,9 +381,10 @@ namespace compact
 
             T* ptr = data();
             T* space = __allocate(__size);
-            std::copy(ptr, ptr + s, space);
+            std::move(ptr, ptr + s, space);
 
-            __destroy_range(ptr, ptr + s);
+            // ???
+            //__destroy_range(ptr, ptr + s);
             __deallocate(ptr, s);
 
             this->__m_data.addr = reinterpret_cast<uint64_t>(space) & ptr_mask;
