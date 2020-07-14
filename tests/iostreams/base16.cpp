@@ -12,13 +12,13 @@ TEST_CASE("iostreams/base16", "[iostreams]")
 {
 	using namespace stdx;
 	using namespace std;
-	const char* hexline = "33343536370a0d";
+    const char* hexline = "33343536370a0d0102";
 	size_t n = (strlen(hexline) / 2) + 1;
 	char* byteline = (char*)malloc(n);
 	::memset(byteline, 0, n);
 	decode(hexline, hexline + strlen(hexline), make_decoder<base16>(byteline));
 
-	REQUIRE(strcmp("34567\n\r", byteline) == 0);
+    REQUIRE(strcmp("34567\n\r\x1\x2", byteline) == 0);
 	::free(byteline); 
 
 	{

@@ -90,7 +90,8 @@ public:
     {
         using namespace std;
         unsigned char val = static_cast<unsigned char>(ch);
-        size_t offset = (__m_flags & ios::uppercase ? 16 : 0);
+        size_t offset = (bool)(__m_flags & ios::uppercase ) << 4; // optimization
+        //size_t offset = (__m_flags & ios::uppercase ? 16 : 0);
         __m_buf.res[num_hex_digits - 1] = alphabet::value[(val & 0x0F) + offset]; val >>= 4;
         __m_buf.res[num_hex_digits - 2] = alphabet::value[(val & 0x0F) + offset]; val >>= 4;
         out = std::copy_n(__m_buf.res, num_hex_digits, out);
