@@ -237,11 +237,11 @@ namespace compact
                 return nullptr;
             } else {
                 T* space = __allocate(__size);
-                T* mid = std::move(ptr, const_cast<T*>(where), space);
-                std::move(const_cast<T*>(where + n), ptr + s, mid);
+                T* mid = std::uninitialized_copy(ptr, const_cast<T*>(where), space);
+                std::uninitialized_copy(const_cast<T*>(where + n), ptr + s, mid);
 
                 // ???
-                //__destroy_range(ptr, ptr + s);
+                __destroy_range(ptr, ptr + s);
                 __deallocate(ptr, s);
 
                 this->__m_data.addr = reinterpret_cast<uint64_t>(space) & ptr_mask;
@@ -268,10 +268,13 @@ namespace compact
             }*/
 
             T* space = __allocate(__size);
-            T* it = std::uninitialized_copy(ptr, const_cast<T*>(where), space);
+            T* it = std::uninitialized_copy(std::make_move_iterator(ptr),
+                                            std::make_move_iterator(const_cast<T*>(where)),
+                                            space);
             T* pos = it;
-            it = std::uninitialized_copy_n(first, n, it);
-            std::uninitialized_copy(const_cast<T*>(where), ptr + s, it);
+            it = std::uninitialized_copy_n(std::make_move_iterator(first), n, it);
+            std::uninitialized_copy(std::make_move_iterator(const_cast<T*>(where)),
+                                    std::make_move_iterator(ptr + s), it);
 
             __destroy_range(ptr, ptr + s);
             __deallocate(ptr, s);
@@ -381,10 +384,13 @@ namespace compact
 
             T* ptr = data();
             T* space = __allocate(__size);
-            std::move(ptr, ptr + s, space);
+            //std::uninitialized_copy(ptr, ptr + s, space);
+            std::uninitialized_copy(std::make_move_iterator(ptr),
+                                    std::make_move_iterator(ptr + s),
+                                    space);
 
             // ???
-            //__destroy_range(ptr, ptr + s);
+            __destroy_range(ptr, ptr + s);
             __deallocate(ptr, s);
 
             this->__m_data.addr = reinterpret_cast<uint64_t>(space) & ptr_mask;
