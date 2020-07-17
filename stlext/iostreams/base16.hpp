@@ -100,7 +100,7 @@ public:
 
     template<class _OutIt>
     void flush(_OutIt&) {
-        traits_type::assign(reinterpret_cast<char*>(&__m_buf), sizeof(__m_buf), 0);
+        std::memset(&__m_buf, 0, sizeof(__m_buf));
     }
 
 private:
@@ -173,7 +173,7 @@ public:
 
     template<class _OutIt>
     void flush(_OutIt&) {
-        traits_type::assign(reinterpret_cast<char*>(&__m_buf), sizeof(__m_buf), 0);
+        std::memset(&__m_buf, 0, sizeof(__m_buf));
     }
 
 private:
