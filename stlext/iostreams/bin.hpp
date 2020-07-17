@@ -43,134 +43,136 @@ _STDX_BEGIN
 namespace detail
 {
 
-	// generic implemetation
-	template<typename _Num>
-	class binrep 
-	{
-		typedef typename std::make_unsigned<_Num>::type _Unsigned;
-	public:
-		typedef _Num value_type;
+    // generic implemetation
+    template<typename _Num>
+    class binrep
+    {
+        typedef typename std::make_unsigned<_Num>::type _Unsigned;
+    public:
+        typedef _Num argument_type;
 
-		static const size_t bpw = std::numeric_limits<_Unsigned>::digits;
+        static const size_t bpw = std::numeric_limits<_Unsigned>::digits;
 
-		binrep(const _Num& x, size_t radix, const char* delim) :
-			__m_val(x), __m_rdx(radix), __m_sep(delim) {
-		}
+        binrep(const argument_type& x, size_t digits, const char* delim) :
+            __m_val(x), __m_ndgts(digits), __m_sep(delim) {
+        }
 
-		template<typename _Elem, typename _Traits>
-		friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, const binrep& rep)
-		{
-			if (stream.flags() & std::ios::showbase) {
-				stream.put((_Elem)'b');
-			}
+        template<typename _Elem, typename _Traits>
+        friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, const binrep& rep)
+        {
+            if (stream.flags() & std::ios::showbase) {
+                stream.put((_Elem)'b');
+            }
 
-			uint8_t n = (bpw - 1);
-			for (int8_t pos = n; pos >= 0; --pos) {
-                if (rep.__m_rdx && (pos != static_cast<ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
-					stream << rep.__m_sep;
-				stream << _Elem('0' + (((_Unsigned)rep.__m_val & (_Unsigned(1) << pos)) ? 1 : 0));
-			}
-			return (stream << std::flush);
-		}
+            uint8_t n = (bpw - 1);
+            for (int8_t pos = n; pos >= 0; --pos) {
+                if (rep.__m_ndgts && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_ndgts))
+                    stream << rep.__m_sep;
+                stream << _Elem('0' + (bool)((_Unsigned)rep.__m_val & (_Unsigned(1) << pos)));
+            }
+            return (stream << std::flush);
+        }
 
-		const value_type& __m_val;
-		size_t __m_rdx;
-		const char* __m_sep;
-	};
+        const argument_type& __m_val;
+        size_t __m_ndgts;
+        const char* __m_sep;
+    };
 
 
-	// bitvector<> specialization
-	template<
+    // bitvector<> specialization
+    template<
         class _Word,
         size_t _Opt,
         class _Alloc
-	>
+    >
     class binrep< stdx::bitvector<_Word, _Opt, _Alloc> >
-	{
-	public:
+    {
+    public:
         typedef stdx::bitvector<_Word, _Opt, _Alloc> argument_type;
 
-        binrep(const argument_type& x, size_t radix, const char* delim) :
-			__m_val(x), __m_rdx(radix), __m_sep(delim) {
-		}
+        binrep(const argument_type& x, size_t digits, const char* delim) :
+            __m_val(x), __m_ndgts(digits), __m_sep(delim) {
+        }
 
         template<typename _Elem, typename _Traits>
-		friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, 
+        friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream,
                                                               const binrep<argument_type>& rep)
-		{
-			if (stream.flags() & std::ios::showbase) {
-				stream.put((_Elem)'b');
-			}
+        {
+            if (stream.flags() & std::ios::showbase) {
+                stream.put((_Elem)'b');
+            }
 
-			size_t n = rep.__m_val.size() - 1;
-			for (ptrdiff_t pos = n; pos >= 0; --pos) {
-                if (rep.__m_rdx && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
-					stream << rep.__m_sep;
-				stream << _Elem('0' + rep.__m_val.test(pos));
-			}
-			return (stream << std::flush);
-		}
+            size_t n = rep.__m_val.size() - 1;
+            for (ptrdiff_t pos = n; pos >= 0; --pos) {
+                if (rep.__m_ndgts && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_ndgts))
+                    stream << rep.__m_sep;
+                stream << _Elem('0' + rep.__m_val.test(pos));
+            }
+            return (stream);
+        }
 
         const argument_type& __m_val;
-		size_t __m_rdx;
-		const char* __m_sep;
-	};
+        size_t __m_ndgts;
+        const char* __m_sep;
+    };
 
 
-	// bitset<> specialization
-	template<size_t _Size>
-	class binrep < std::bitset<_Size> > 
-	{
-	public:
+    // bitset<> specialization
+    template<size_t _Size>
+    class binrep < std::bitset<_Size> >
+    {
+    public:
         typedef std::bitset<_Size> argument_type;
 
-        binrep(const argument_type& x, size_t radix, const char* delim) :
-			__m_val(x), __m_rdx(radix), __m_sep(delim) {
-		}
+        binrep(const argument_type& x, size_t digits, const char* delim) :
+            __m_val(x), __m_ndgts(digits),
+            __m_sep(delim), __m_sep_len(delim != nullptr ? std::char_traits<char>::length(delim) : 0) {
+        }
 
         template<typename _Elem, typename _Traits>
-		friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream, 
+        friend std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits>& stream,
                                                               const binrep< argument_type >& rep)
-		{
-			if (stream.flags() & std::ios::showbase) {
-				stream.put((_Elem)'b');
-			}
+        {
+            if (stream.flags() & std::ios::showbase) {
+                stream.put((_Elem)'b');
+            }
 
-			size_t n = rep.__m_val.size() - 1;
-			for (ptrdiff_t pos = n; pos >= 0; --pos) {
-                if (rep.__m_rdx && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_rdx))
-					stream << rep.__m_sep;
-				stream << _Elem('0' + rep.__m_val.test(pos));
-			}
-			return (stream << std::flush);
-		}
+            size_t n = rep.__m_val.size() - 1;
+            for (ptrdiff_t pos = n; pos >= 0; --pos) {
+                if (rep.__m_ndgts && (pos != static_cast<std::ptrdiff_t>(n)) && !((pos + 1) % rep.__m_ndgts))
+                    stream.write((const _Elem*)rep.__m_sep, rep.__m_sep_len);
+                stream << _Elem('0' + rep.__m_val.test(pos));
+            }
+            return (stream);
+        }
 
         const argument_type& __m_val;
-		size_t __m_rdx;
-		const char* __m_sep;
-	};
+        size_t __m_ndgts;
+        const char* __m_sep;
+        size_t __m_sep_len;
+    };
 
 } // end namespace detail
 
 
 template<class T>
-detail::binrep<T> bin(const T& x, size_t radix = 0, const char* delim = " ") {
-	static_assert(std::is_integral<T>::value, "T is not an integral type");
-	return detail::binrep<T>(x, radix, delim);
+detail::binrep<T> bin(const T& x, size_t digits = 0, const char* delim = " ") {
+    static_assert(std::is_integral<T>::value, "T is not an integral type");
+    return detail::binrep<T>(x, digits, delim);
 }
 
 template<class _Word, size_t _Opt, class _Alloc>
 detail::binrep< stdx::bitvector<_Word, _Opt, _Alloc> > bin(const stdx::bitvector<_Word, _Opt, _Alloc>& x,
-                                                           size_t radix = 0, const char* delim = " ") {
+                                                           size_t digits = 0, const char* delim = " ") {
     typedef stdx::bitvector<_Word, _Opt, _Alloc> value_type;
-	return detail::binrep<value_type>(x, radix, delim);
+    return detail::binrep<value_type>(x, digits, delim);
 }
 
 template<size_t _Size>
 detail::binrep< std::bitset<_Size> > bin(const std::bitset<_Size>& x,
-                                         size_t radix = 0, const char* delim = " ") {
-	typedef std::bitset<_Size> value_type;
-	return detail::binrep<value_type>(x, radix, delim);
+                                         size_t digits = 0, const char* delim = " ") {
+    typedef std::bitset<_Size> value_type;
+    return detail::binrep<value_type>(x, digits, delim);
 }
 
 _STDX_END
