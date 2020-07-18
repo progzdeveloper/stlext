@@ -33,51 +33,197 @@
 #include <locale>
 #include <string>
 #include <system_error>
+#include <cstdint>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 #include "../platform/common.h"
 
 _STDX_BEGIN
 
 inline std::string error_message(const std::string& s,
-								 int val = errno,
-								 const std::error_category& c = std::generic_category()) {
-	std::string text(s);
-	text += c.message(val);
-	return text;
+                                 int val = errno,
+                                 const std::error_category& c = std::generic_category()) {
+    std::string text(s);
+    text += c.message(val);
+    return text;
 }
 
 inline std::string error_message(int val = errno,
-								 const std::error_category& c = std::generic_category()) {
-	return c.message(val);
+                                 const std::error_category& c = std::generic_category()) {
+    return c.message(val);
 }
 
 inline std::string error_message(const std::error_code& code) {
-	return code.message();
+    return code.message();
 }
 
 
 static inline std::locale system_locale() {
-	return std::locale(::setlocale(LC_ALL, ""));
+    return std::locale(::setlocale(LC_ALL, ""));
 }
+
+
+
+
 
 
 template<class T>
-inline std::size_t count_digits(T x, size_t radix = 10) {
+inline unsigned count_digits(T x, size_t radix = 10) {
     std::size_t n = 1;
-	while (x /= static_cast<T>(radix)) { 
-		++n; 
-	}
-	return n;
+    while (x /= static_cast<T>(radix)) {
+        ++n;
+    }
+    return n;
 }
 
 template<std::size_t _Radix, class T>
-inline std::size_t count_digits(T x) {
+inline unsigned count_digits(T x) {
     std::size_t n = 1;
-	while (x /= static_cast<T>(_Radix)) {
-		++n;
-	}
-	return n;
+    while (x /= static_cast<T>(_Radix)) {
+        ++n;
+    }
+    return n;
 }
+
+
+
+template<>
+inline unsigned count_digits<10, uint32_t>(uint32_t n)
+{
+#if defined(_MSC_VER) || defined(__GNUC__)
+    static const uint32_t powers_of_10[] = {
+        0,
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        100000000,
+        1000000000
+    };
+
+#ifdef _MSC_VER
+    unsigned long i = 0;
+    _BitScanReverse(&i, n | 1);
+    uint32_t t = (i + 1) * 1233 >> 12;
+#elif __GNUC__
+    uint32_t t = (32 - __builtin_clz(n | 1)) * 1233 >> 12;
+#endif
+    return t - (n < powers_of_10[t]) + 1;
+#else
+    // Simple pure C++ implementation
+    if (n < 10) return 1;
+    if (n < 100) return 2;
+    if (n < 1000) return 3;
+    if (n < 10000) return 4;
+    if (n < 100000) return 5;
+    if (n < 1000000) return 6;
+    if (n < 10000000) return 7;
+    if (n < 100000000) return 8;
+    if (n < 1000000000) return 9;
+    return 10;
+#endif
+}
+
+
+template<>
+inline unsigned count_digits<10, int32_t>(int32_t n) {
+    uint32_t u = static_cast<uint32_t>(value);
+    if (n < 0) {
+        u = ~u + 1;
+    }
+    return count_digits<10, uint32_t>(u);
+}
+
+
+
+
+
+
+template<>
+inline unsigned count_digits<10, uint64_t>(uint64_t n)
+{
+#if defined(_MSC_VER) || defined(__GNUC__)
+    static const uint64_t powers_of_10[] = {
+        0,
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        100000000,
+        1000000000,
+        10000000000,
+        100000000000,
+        1000000000000,
+        10000000000000,
+        100000000000000,
+        1000000000000000,
+        10000000000000000,
+        100000000000000000,
+        1000000000000000000,
+        10000000000000000000U
+    };
+
+#if __GNUC__
+    uint32_t t = (64 - __builtin_clzll(n | 1)) * 1233 >> 12;
+#elif _M_IX86
+    unsigned long i = 0;
+    uint64_t m = n | 1;
+    if (_BitScanReverse(&i, m >> 32))
+        i += 32;
+    else
+        _BitScanReverse(&i, m & 0xFFFFFFFF);
+    uint32_t t = (i + 1) * 1233 >> 12;
+#elif _M_X64
+    unsigned long i = 0;
+    _BitScanReverse64(&i, n | 1);
+    uint32_t t = (i + 1) * 1233 >> 12;
+#endif
+    return t - (n < powers_of_10[t]) + 1;
+#else
+    // Simple pure C++ implementation
+    if (n < 10) return 1;
+    if (n < 100) return 2;
+    if (n < 1000) return 3;
+    if (n < 10000) return 4;
+    if (n < 100000) return 5;
+    if (n < 1000000) return 6;
+    if (n < 10000000) return 7;
+    if (n < 100000000) return 8;
+    if (n < 1000000000) return 9;
+    if (n < 10000000000) return 10;
+    if (n < 100000000000) return 11;
+    if (n < 1000000000000) return 12;
+    if (n < 10000000000000) return 13;
+    if (n < 100000000000000) return 14;
+    if (n < 1000000000000000) return 15;
+    if (n < 10000000000000000) return 16;
+    if (n < 100000000000000000) return 17;
+    if (n < 1000000000000000000) return 18;
+    if (n < 10000000000000000000) return 19;
+    return 20;
+#endif
+}
+
+template<>
+inline unsigned count_digits<10, int64_t>(int64_t n) {
+    uint64_t u = static_cast<uint64_t>(value);
+    if (n < 0) {
+        u = ~u + 1;
+    }
+    return count_digits<10, uint64_t>(u);
+}
+
+
+
 
 
 _STDX_END

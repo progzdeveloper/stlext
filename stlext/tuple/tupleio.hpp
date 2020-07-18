@@ -41,6 +41,8 @@
 
 _STDX_BEGIN
 
+#define _STLEXT_TUPLE_FORMAT_PLACEHOLDER_BUFFER_SIZE (sizeof(_Elem) * (std::numeric_limits<unsigned>::digits10 + 2))
+
 namespace detail
 {
 	template<int I, int N>
@@ -123,13 +125,13 @@ namespace detail
 #pragma warning(push,1)
 #pragma warning(disable:4996)
 #endif
-		template<int _Idx>
+        template<unsigned _Idx>
 		static int placeholder(char* buffer) {
-			return  sprintf(buffer, "{%d}", _Idx);
+            return  snprintf(buffer, _STLEXT_TUPLE_FORMAT_PLACEHOLDER_BUFFER_SIZE, "{%u}", _Idx);
 		}
-		template<int _Idx>
+        template<unsigned _Idx>
 		static int placeholder(wchar_t* buffer) {
-			return  swprintf(buffer, L"{%d}", _Idx);
+            return  snwprintf(buffer, _STLEXT_TUPLE_FORMAT_PLACEHOLDER_BUFFER_SIZE, L"{%u}", _Idx);
 		}
 #ifdef STDX_CMPLR_MSVC
 #pragma warning(pop)
@@ -193,7 +195,7 @@ inline std::basic_string<_Elem> put_tuple(const _Elem* format, const _Tuple& tpl
 	typedef std::basic_string<_Elem> string_type;
 	typedef std::basic_ostringstream<_Elem> stream_type;
 
-	_Elem placeholder[sizeof(_Elem) * (std::numeric_limits<int>::digits10 + 2)];
+    _Elem placeholder[_STLEXT_TUPLE_FORMAT_PLACEHOLDER_BUFFER_SIZE];
 	stream_type oss;
 	if (format == nullptr) {
 		default_format::put(oss, tpl);
@@ -211,6 +213,6 @@ inline std::basic_string<_Elem> put_tuple(const std::basic_string<_Elem>& format
 }
 
 
-
+#undef _STLEXT_TUPLE_FORMAT_PLACEHOLDER_BUFFER_SIZE
 
 _STDX_END

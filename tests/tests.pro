@@ -44,6 +44,12 @@ SOURCES += \
     containers/span.cpp \
     range/interval.cpp \
     bfc/bloom_filter.cpp \
-    tuple/tuple_algo.cpp
+    tuple/tuple_algo.cpp \
+    iostreams/itos_ascii.cpp \
+    iostreams/itos_utils.cpp \
+    iostreams/itos_wide.cpp
+
+HEADERS += \
+    iostreams/itos_utils.hpp
 
 

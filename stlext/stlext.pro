@@ -167,7 +167,9 @@ HEADERS += \
     bitvector/bittraits.hpp \
     bitvector/bitvector.hpp \
     bitvector/bitview.hpp \
-    bitvector/bitalgo.hxx
+    bitvector/bitalgo.hxx \
+    algorithm/ext/share_element.hpp \
+    iostreams/itos.hpp
 
 SOURCES +=
 
