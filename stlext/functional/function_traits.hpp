@@ -29,6 +29,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <cstdarg>
+
 #include <functional>
 #include <tuple>
 #include <type_traits>
@@ -40,305 +42,270 @@
 _STDX_BEGIN
 
 /*!
-\brief struct function_traints
-\tparam F type of function object
+ * \brief struct argument
+ * \tparam N number of argument counting from 0.
+ * Provides ability to get n-th argument type
+ */
 
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class F>
+#define __DECL_ARGS_REGULAR()                                                     \
+    template <size_t I>                                                           \
+    struct argument {                                                             \
+        static_assert(I < arity, "invalid argument index");                       \
+        typedef typename std::tuple_element<I, arguments_tuple>::type type;       \
+    };
+
+#define __DECL_ARGS_ELIPSIS()                                                    \
+    template <size_t I, bool _IsElipsis = is_elipsis>                            \
+    struct argument {                                                            \
+        static_assert(I < arity, "invalid argument index");                      \
+        typedef typename std::tuple_element<I, arguments_tuple>::type type;      \
+    };                                                                           \
+                                                                                 \
+    template <bool _IsElipsis>                                                   \
+    struct argument<arity-1, _IsElipsis> {                                       \
+        static_assert(_IsElipsis == true, "");                                   \
+        typedef va_list type;                                                    \
+    };
+
+
+
+// predeclaration
+
+/*!
+ * \brief struct function_traints
+ * \tparam _Ret result type of function invokation
+ * \tparam _Args argument types of function
+ * struct function_traints provides ability to
+ * retrieve function traits such as function arity,
+ * result type and n-th argument type.
+ */
+
+template <class T>
 struct function_traits;
 
+
+
 /*!
-\brief struct function_traints
-\tparam _Ret result type of function invokation
-\tparam _Args argument types of function
-
-struct function_traints provides ability to
-retrieve function traits such as function arity,
-result type and n-th argument type.
-*/
+ * \brief struct function_traints<> specialization
+ * for free function references
+ */
 template <class _Ret, class... _Args>
-struct function_traits<_Ret(_Args...)> {
-    typedef void class_type;   //!< type of class object (for class members)
-    typedef _Ret result_type;  //!< type of result of function invokation
-    typedef std::tuple<_Args...> tuple_type;  //!< type of arguments tuple
+struct function_traits<_Ret(_Args...)>
+{
+    typedef void   class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
 
-    typedef std::function<_Ret(_Args...)>  function_type;  //!< type of std::function<> object
+    typedef std::function<_Ret (_Args...)> function_type;
+
+    typedef _Ret (*signature_type)(_Args...);
+    typedef _Ret (callable_type)(_Args...);
+
+    static constexpr size_t arity = sizeof...(_Args);
+    static constexpr bool is_member_function = false;
+    static constexpr bool is_elipsis = false;
+    static constexpr bool is_const = false;
+
+    __DECL_ARGS_REGULAR()
+};
+
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for free function pointers
+ */
+template <class _Ret, class... _Args>
+struct function_traits<_Ret (*)(_Args...)>
+{
+    typedef void   class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
+
+    typedef std::function<_Ret (_Args...)> function_type;
+
+    typedef _Ret (*signature_type)(_Args...);
+    typedef _Ret (callable_type)(_Args...);
+
+    static constexpr size_t arity = sizeof...(_Args);
+    static constexpr bool is_member_function = false;
+    static constexpr bool is_elipsis = false;
+    static constexpr bool is_const = false;
+
+    __DECL_ARGS_REGULAR()
+};
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for pointers to const member function
+ */
+template <class _Class, class _Ret, class... _Args>
+struct function_traits<_Ret(_Class::*)(_Args...) const>
+{
+    typedef _Class class_type; //!< type of class object (for class members)
+    typedef _Ret   result_type; //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple; //!< type of arguments tuple
+
+    typedef std::function<_Ret (_Args...)> function_type;
+
+    typedef _Ret(_Class::* signature_type)(_Args...) const;
     typedef _Ret(callable_type)(_Args...);
 
-    static constexpr size_t arity = sizeof...(_Args);  //!< function arity
+    static constexpr size_t arity = sizeof...(_Args);
+    static constexpr bool is_member_function = true;
     static constexpr bool is_elipsis = false;
+    static constexpr bool is_const = true;
 
-    /*!
-    \brief helper struct argument
-    \tparam N number of argument counting from 0.
-    Provides ability to get n-th argument type
-    */
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type
-            type;  //!< type of N-th argument
-    };
+    __DECL_ARGS_REGULAR()
 };
 
 /*!
-\brief struct function_traints
-\tparam _Ret result type of function invokation
-\tparam _Args argument types of function
+ * \brief struct function_traints<> specialization
+ * for pointers to non-const member function
+ */
+template <class _Class, class _Ret, class... _Args>
+struct function_traits<_Ret(_Class::*)(_Args...) >
+{
+    typedef _Class class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
 
-struct function_traints provides ability to
-retrieve function traits such as function arity,
-result type and n-th argument type.
-*/
-template <class _Ret, class... _Args>
-struct function_traits<_Ret(_Args..., ...)> {
-    typedef void class_type;   //!< type of class object (for class members)
-    typedef _Ret result_type;  //!< type of result of function invokation
-    typedef std::tuple<_Args...> tuple_type;  //!< type of arguments tuple
+    typedef std::function<_Ret (_Args...)> function_type;
 
-    typedef void function_type;  //!< type of std::function<> object
+    typedef _Ret(_Class::* signature_type)(_Args...);
+    typedef _Ret(callable_type)(_Args...);
+
+    static constexpr size_t arity = sizeof...(_Args);
+    static constexpr bool is_member_function = true;
+    static constexpr bool is_elipsis = false;
+    static constexpr bool is_const = false;
+
+    __DECL_ARGS_REGULAR()
+};
+
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for  generic types that are functors, delegate to its 'operator()'
+ */
+template <class T>
+struct function_traits
+{
+    typedef function_traits<decltype(&T::operator())> _Base_type;
+
+    typedef typename _Base_type::class_type      class_type;
+    typedef typename _Base_type::result_type     result_type;
+    typedef typename _Base_type::arguments_tuple arguments_tuple;
+
+    typedef typename _Base_type::function_type   function_type ;
+
+    typedef typename _Base_type::signature_type  signature_type;
+    typedef typename _Base_type::callable_type   callable_type;
+
+    static constexpr size_t arity = _Base_type::arity;
+    static constexpr bool is_member_function = _Base_type::is_member_function;
+    static constexpr bool is_elipsis = _Base_type::is_elipsis;
+    static constexpr bool is_const = _Base_type::is_const;
+
+    __DECL_ARGS_REGULAR()
+};
+
+
+/// elipsis
+
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for pointers to const member elipsis-like function
+ */
+template <class _Class, class _Ret, class... _Args>
+struct function_traits< _Ret(_Class::*)(_Args..., ...) const>
+{
+    typedef _Class class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
+
+    typedef std::function<_Ret (_Args..., ...)> function_type;
+
+    typedef _Ret(_Class::* signature_type)(_Args..., ...) const;
+    typedef _Ret(callable_type)(_Args..., ...) const;
+
+    static constexpr size_t arity = sizeof...(_Args) + 1;
+    static constexpr bool is_member_function = true;
+    static constexpr bool is_elipsis = true;
+    static constexpr bool is_const = true;
+
+    __DECL_ARGS_ELIPSIS()
+};
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for pointers to const member elipsis-like function
+ */
+template <class _Class, class _Ret, class... _Args>
+struct function_traits< _Ret(_Class::*)(_Args..., ...) >
+{
+    typedef _Class class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
+
+    typedef std::function<_Ret (_Args..., ...)> function_type;
+
+    typedef _Ret(_Class::* signature_type)(_Args..., ...);
     typedef _Ret(callable_type)(_Args..., ...);
 
-    static constexpr size_t arity = sizeof...(_Args);  //!< function arity
-    static constexpr bool is_elipsis = true;
 
-    /*!
-    \brief helper struct argument
-    \tparam N number of argument counting from 0.
-    Provides ability to get n-th argument type
-    */
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type  type;  //!< type of N-th argument
-    };
+    static constexpr size_t arity = sizeof...(_Args) + 1;
+    static constexpr bool is_member_function = true;
+    static constexpr bool is_elipsis = true;
+    static constexpr bool is_const = false;
+
+    __DECL_ARGS_ELIPSIS()
 };
 
-/*!
-\brief struct function_traints<> specialization for free function
 
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
+
+
+/*!
+ * \brief struct function_traints<> specialization
+ * for free function pointers to elipsis-like functions
+ */
 template <class _Ret, class... _Args>
-struct function_traits<_Ret (*)(_Args...)> {
-    typedef void class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
+struct function_traits< _Ret (*)(_Args..., ...) >
+{
+    typedef void   class_type;   //!< type of class object (for class members)
+    typedef _Ret   result_type;  //!< type of result of function invokation
+    typedef std::tuple<_Args...> arguments_tuple;  //!< type of arguments tuple
 
-    typedef std::function<_Ret(_Args...)> function_type;
-    typedef _Ret (*callable_type)(_Args...);
+    typedef std::function<_Ret (_Args..., ...)> function_type;
 
-    static constexpr size_t arity = sizeof...(_Args);
-    static constexpr bool is_elipsis = false;
+    typedef _Ret (*signature_type)(_Args..., ...);
+    typedef _Ret (callable_type)(_Args..., ...);
 
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for free elipsis-function
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Ret, class... _Args>
-struct function_traits<_Ret (*)(_Args..., ...)> {
-    typedef void class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
-
-    typedef void function_type;
-    typedef _Ret (*callable_type)(_Args..., ...);
-
-    static constexpr size_t arity = sizeof...(_Args);
+    static constexpr size_t arity = sizeof...(_Args) + 1;
+    static constexpr bool is_member_function = false;
     static constexpr bool is_elipsis = true;
+    static constexpr bool is_const = false;
 
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for member function pointer
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Class, class _Ret, class... _Args>
-struct function_traits<_Ret (_Class::*)(_Args...)> {
-    typedef _Class class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
-
-    typedef std::function<_Ret(_Class*, _Args...)> function_type;
-
-    typedef _Ret (_Class::*callable_type)(_Args...);
-
-    static constexpr size_t arity = sizeof...(_Args);
-    static constexpr bool is_elipsis = false;
-
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for elipsis member function
-pointer
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Class, class _Ret, class... _Args>
-struct function_traits<_Ret (_Class::*)(_Args..., ...)> {
-    typedef _Class class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
-
-    typedef void function_type;
-
-    typedef _Ret (_Class::*callable_type)(_Args..., ...);
-
-    static constexpr size_t arity = sizeof...(_Args);
-    static constexpr bool is_elipsis = true;
-
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for const member function
-pointer
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Class, class _Ret, class... _Args>
-struct function_traits<_Ret (_Class::*)(_Args...) const> {
-    typedef _Class class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
-
-    typedef std::function<_Ret(_Class*, _Args...)> function_type;
-
-    typedef _Ret (_Class::*callable_type)(_Args...) const;
-
-    static constexpr size_t arity = sizeof...(_Args);
-    static constexpr bool is_elipsis = false;
-
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for const elipsis member
-function pointer
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Class, class _Ret, class... _Args>
-struct function_traits<_Ret (_Class::*)(_Args..., ...) const> {
-    typedef _Class class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Args...> tuple_type;
-
-    typedef void function_type;
-
-    typedef _Ret (_Class::*callable_type)(_Args..., ...) const;
-
-    static constexpr size_t arity = sizeof...(_Args);
-    static constexpr bool is_elipsis = true;
-
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
-};
-
-/*!
-\brief struct function_traints<> specialization for member object pointer
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class _Class, class _Ret>
-struct function_traits<_Ret(_Class::*)> {
-    typedef _Class class_type;
-    typedef _Ret result_type;
-    typedef std::tuple<_Class> tuple_type;
-
-    typedef std::function<_Ret(_Class*)> function_type;
-
-    typedef _Ret (_Class::*callable_type)();
-
-    static constexpr size_t arity = 1;
-    static constexpr bool is_elipsis = false;
-
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        typedef typename std::tuple_element<N, tuple_type>::type type;
-    };
+    __DECL_ARGS_ELIPSIS()
 };
 
 
-/*!
-\brief struct function_traints<> specialization for std::function<> object type
+#undef __DECL_ARGS_REGULAR
+#undef __DECL_ARGS_ELIPSIS
 
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class F>
-struct function_traits {
-   private:
-    /* V.Lissev found out that to prevent miscompilations on GCC
-     * we need a fully qualified name of stdx::function_traits<...>
-     * for the helper __call_type type definition.
-     */
-    typedef typename stdx::function_traits<decltype(&F::operator())> __call_type;
 
-   public:
-    typedef F callable_type;
-    typedef F function_type;
-    typedef F class_type;
-    typedef typename __call_type::result_type result_type;
-    typedef typename __call_type::tuple_type tuple_type;
 
-    static constexpr size_t arity = __call_type::arity;
-    static constexpr bool is_elipsis = false;
+template <class _Callable>
+typename function_traits<_Callable>::function_type make_function(_Callable c){
+  return (typename function_traits<_Callable>::function_type)(c);
+}
 
-    template <size_t N>
-    struct argument {
-        static_assert(N < arity, "invalid argument index");
-        using type = typename __call_type::template argument<N>::type;
-    };
-};
 
-/*!
-\brief struct function_traints<> specialization for std::function<> reference
-object type
 
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class F>
-struct function_traits<F&> : public function_traits<F> {};
-
-/*!
-\brief struct function_traints<> specialization for std::function<>
-rvalue-reference object type
-
-\see \ref function_traits< _Ret(_Args...) > for full documentation
-*/
-template <class F>
-struct function_traits<F&&> : public function_traits<F> {};
 
 _STDX_END
