@@ -133,7 +133,7 @@ inline unsigned count_digits<10, uint32_t>(uint32_t n)
 
 template<>
 inline unsigned count_digits<10, int32_t>(int32_t n) {
-    uint32_t u = static_cast<uint32_t>(value);
+    uint32_t u = static_cast<uint32_t>(n);
     if (n < 0) {
         u = ~u + 1;
     }
@@ -215,7 +215,7 @@ inline unsigned count_digits<10, uint64_t>(uint64_t n)
 
 template<>
 inline unsigned count_digits<10, int64_t>(int64_t n) {
-    uint64_t u = static_cast<uint64_t>(value);
+    uint64_t u = static_cast<uint64_t>(n);
     if (n < 0) {
         u = ~u + 1;
     }
