@@ -34,6 +34,117 @@
 
 _STDX_BEGIN
 
+
+template<size_t _BufSize>
+struct cformatter
+{
+    const void* buffer;
+    size_t length;
+
+    template<class... _Args>
+    cformatter(char(&buf)[_BufSize], const char* format,  _Args&&... args) :
+        buffer(buf), length(0)
+    {
+        length = std::snprintf(buf, _BufSize, format, std::forward<_Args>(args)...);
+    }
+
+    template<class... _Args>
+    cformatter(char(&buf)[_BufSize], const wchar_t* format,  _Args&&... args) :
+        buffer(buf), length(0)
+    {
+        length = std::swprintf((wchar_t*)buf, _BufSize, format, std::forward<_Args>(args)...);
+    }
+
+    template<class... _Args>
+    cformatter(wchar_t(&buf)[_BufSize], const wchar_t* format,  _Args&&... args) :
+        buffer(buf), length(0)
+    {
+        length = std::swprintf(buf, _BufSize, format, std::forward<_Args>(args)...);
+    }
+
+    template<class _Char, class _Traits>
+    friend inline std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& out,
+                                                                 const cformatter<_BufSize>& formatter) {
+        return (out.write((const _Char*)formatter.buffer, formatter.length));
+    }
+};
+
+
+
+template<size_t _BufSize, class... _Args>
+inline cformatter<_BufSize> cformat(char(&buf)[_BufSize], const char* fmt,  _Args&&... args) {
+    return cformatter<_BufSize>(buf, fmt, std::forward<_Args>(args)...);
+}
+
+template<size_t _BufSize, class... _Args>
+inline cformatter<_BufSize> cformat(char(&buf)[_BufSize], const wchar_t* fmt,  _Args&&... args) {
+    static_assert(_BufSize % sizeof(wchar_t) == 0, "unaligned buffer size");
+    return cformatter<_BufSize>(buf, fmt, std::forward<_Args>(args)...);
+}
+
+template<size_t _BufSize, class... _Args>
+inline cformatter<_BufSize> cformat(wchar_t(&buf)[_BufSize], const wchar_t* fmt,  _Args&&... args) {
+    return cformatter<_BufSize>(buf, fmt, std::forward<_Args>(args)...);
+}
+
+
+
+
+template<>
+struct cformatter<0>
+{
+    std::string buffer;
+
+    template<class... _Args>
+    cformatter(const char* format,  _Args&&... args)
+    {
+        __reserve(format, std::forward<_Args>(args)...);
+        size_t length = std::snprintf((char*)buffer.data(), buffer.size(), format, std::forward<_Args>(args)...);
+        buffer.resize(length);
+    }
+
+    template<class... _Args>
+    cformatter(const wchar_t* format,  _Args&&... args)
+    {
+        __reserve(format, std::forward<_Args>(args)...);
+        size_t length = std::swprintf((wchar_t*)buffer.data(), buffer.size(), format, std::forward<_Args>(args)...);
+        buffer.resize(length * sizeof(wchar_t));
+    }
+
+    template<class _Char, class _Traits>
+    friend inline std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& out,
+                                                                 const cformatter<0>& formatter) {
+        return (out.write((const _Char*)formatter.buffer.data(), formatter.buffer.size()));
+    }
+
+private:
+    template<class... _Args>
+    inline void __reserve(const char* format, _Args&&... args) {
+        buffer.resize(std::snprintf(nullptr, 0, format, std::forward<_Args>(args)...) + 1, 0);
+    }
+
+    template<class... _Args>
+    inline void __reserve(const wchar_t* format, _Args&&... args) {
+        buffer.resize((std::swprintf(nullptr, 0, format, std::forward<_Args>(args)...) + 1) * sizeof(wchar_t), 0);
+    }
+};
+
+
+
+template<class... _Args>
+inline cformatter<0> cformat(const char* fmt,  _Args&&... args) {
+    return cformatter<0>(fmt, std::forward<_Args>(args)...);
+}
+
+template<class... _Args>
+inline cformatter<0> cformat(const wchar_t* fmt,  _Args&&... args) {
+    return cformatter<0>(fmt, std::forward<_Args>(args)...);
+}
+
+
+
+
+
 /*! \deprecated */
 template<typename _Elem, typename... _Args>
 inline std::basic_string<_Elem>& format(std::basic_string<_Elem>& __str, const _Elem* __fmt, _Args&&... __args) {
@@ -46,6 +157,10 @@ template<typename _Elem, typename... _Args>
 inline std::basic_string<_Elem> format(const _Elem* __fmt, _Args&&... __args) {
 	return put_tuple(__fmt, std::forward_as_tuple(__args...));
 }
+
+
+
+
 
 _STDX_END
 
