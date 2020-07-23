@@ -30,17 +30,20 @@
 
 #pragma once
 #include "../platform/common.h"
+#include "iomanipbase.hpp"
+
+// for deprecated functions
 #include "../tuple/tupleio.hpp"
 
 _STDX_BEGIN
 
 
 template<size_t _BufSize>
-struct cformatter
+class cformatter :
+        public omanip< cformatter<_BufSize> >
 {
-    const void* buffer;
-    size_t length;
-
+    friend class omanip< cformatter<_BufSize> >;
+public:
     template<class... _Args>
     cformatter(char(&buf)[_BufSize], const char* format,  _Args&&... args) :
         buffer(buf), length(0)
@@ -62,11 +65,15 @@ struct cformatter
         length = std::swprintf(buf, _BufSize, format, std::forward<_Args>(args)...);
     }
 
+private:
     template<class _Char, class _Traits>
-    friend inline std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& out,
-                                                                 const cformatter<_BufSize>& formatter) {
-        return (out.write((const _Char*)formatter.buffer, formatter.length));
+    void do_put(std::basic_ostream<_Char, _Traits>& out) const {
+        out.write((const _Char*)buffer, length);
     }
+
+private:
+    const void* buffer;
+    size_t length;
 };
 
 
@@ -91,10 +98,12 @@ inline cformatter<_BufSize> cformat(wchar_t(&buf)[_BufSize], const wchar_t* fmt,
 
 
 template<>
-struct cformatter<0>
+class cformatter<0> :
+        public omanip< cformatter<0> >
 {
-    std::string buffer;
+    friend class omanip< cformatter<0> >;
 
+public:
     template<class... _Args>
     cformatter(const char* format,  _Args&&... args)
     {
@@ -112,9 +121,8 @@ struct cformatter<0>
     }
 
     template<class _Char, class _Traits>
-    friend inline std::basic_ostream<_Char, _Traits>& operator<<(std::basic_ostream<_Char, _Traits>& out,
-                                                                 const cformatter<0>& formatter) {
-        return (out.write((const _Char*)formatter.buffer.data(), formatter.buffer.size()));
+    void do_put(std::basic_ostream<_Char, _Traits>& out) const {
+        out.write((const _Char*)buffer.data(), buffer.size());
     }
 
 private:
@@ -127,6 +135,9 @@ private:
     inline void __reserve(const wchar_t* format, _Args&&... args) {
         buffer.resize((std::swprintf(nullptr, 0, format, std::forward<_Args>(args)...) + 1) * sizeof(wchar_t), 0);
     }
+
+private:
+    std::string buffer;
 };
 
 
@@ -144,6 +155,7 @@ inline cformatter<0> cformat(const wchar_t* fmt,  _Args&&... args) {
 
 
 
+namespace deprecated {
 
 /*! \deprecated */
 template<typename _Elem, typename... _Args>
@@ -158,9 +170,7 @@ inline std::basic_string<_Elem> format(const _Elem* __fmt, _Args&&... __args) {
 	return put_tuple(__fmt, std::forward_as_tuple(__args...));
 }
 
-
-
-
+}
 
 _STDX_END
 
