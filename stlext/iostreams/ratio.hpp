@@ -31,6 +31,9 @@
 #pragma once
 #include <string>
 #include <ratio>
+#include <limits>
+
+#include "../compability/string_view"
 
 #include "../platform/common.h"
 
@@ -48,16 +51,23 @@ typedef std::ratio<(1ULL << 60), 1> exbi;
 template <class _Ratio, class _Char>
 struct ratio_traits
 {
-	static std::basic_string<_Char> symbol() {
-		return prefix(); 
-	}
+    static const std::basic_string<_Char>& symbol() {
+        return prefix();
+    }
 
-	static std::basic_string<_Char> prefix() {
-		std::basic_ostringstream<_Char> os;
-		os << _Char('[') << _Ratio::num << _Char('/')
-			<< _Ratio::den << _Char(']');
-		return os.str();
-	}
+    static const std::basic_string<_Char>& prefix() {
+        static std::basic_string<_Char> str;
+        if (str.empty()) {
+            str.reserve(2 * (std::numeric_limits<intmax_t>::digits10 + 2) + 3);
+            str += _Char('[');
+            str += std::to_string(_Ratio::num);
+            str += _Char('/');
+            str += std::to_string(_Ratio::den);
+            str += _Char(']');
+            str.shrink_to_fit();
+        }
+        return str;
+    }
 };
 
 
@@ -66,8 +76,8 @@ struct ratio_traits
 template <>
 struct ratio_traits<std::ratio<1, 1>, char>
 {
-	static std::string symbol() { return std::string(); }
-	static std::string prefix() { return std::string(); }
+    static const std::string_view symbol() { return std::string_view(); }
+    static const std::string_view prefix() { return std::string_view(); }
 };
 
 
@@ -78,29 +88,29 @@ struct ratio_traits<std::ratio<1, 1>, char>
 template <>
 struct ratio_traits<std::atto, char>
 {
-	static std::string symbol() { return std::string(1, 'a'); }
-	static std::string prefix() { return std::string("atto"); }
+    static const std::string_view symbol() { return std::string_view("a", 1); }
+    static const std::string_view prefix() { return std::string_view("atto", 4); }
 };
 
 template <>
 struct ratio_traits<std::atto, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'a'); }
-	static std::u16string prefix() { return std::u16string(u"atto"); }
+    static const std::u16string_view symbol() { return std::u16string_view(u"a", 1); }
+    static const std::u16string_view prefix() { return std::u16string_view(u"atto", 4); }
 };
 
 template <>
 struct ratio_traits<std::atto, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'a'); }
-	static std::u32string prefix() { return std::u32string(U"atto"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"a", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"atto", 4); }
 };
 
 template <>
 struct ratio_traits<std::atto, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'a'); }
-	static std::wstring prefix() { return std::wstring(L"atto"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"a", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"atto", 4); }
 };
 
 
@@ -111,31 +121,31 @@ struct ratio_traits<std::atto, wchar_t>
 template <>
 struct ratio_traits<std::femto, char>
 {
-	static std::string symbol() { return std::string(1, 'f'); }
-	static std::string prefix() { return std::string("femto"); }
+    static std::string_view symbol() { return std::string_view("f", 1); }
+    static std::string_view prefix() { return std::string_view("femto", 5); }
 };
 
 
 template <>
 struct ratio_traits<std::femto, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'f'); }
-	static std::u16string prefix() { return std::u16string(u"femto"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"f", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"femto", 5); }
 };
 
 template <>
 struct ratio_traits<std::femto, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'f'); }
-	static std::u32string prefix() { return std::u32string(U"femto"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"f", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"femto", 5); }
 };
 
 
 template <>
 struct ratio_traits<std::femto, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'f'); }
-	static std::wstring prefix() { return std::wstring(L"femto"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"f", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"femto", 5); }
 };
 
 
@@ -146,31 +156,31 @@ struct ratio_traits<std::femto, wchar_t>
 template <>
 struct ratio_traits<std::pico, char>
 {
-	static std::string symbol() { return std::string(1, 'p'); }
-	static std::string prefix() { return std::string("pico"); }
+    static std::string_view symbol() { return std::string_view("p", 1); }
+    static std::string_view prefix() { return std::string_view("pico", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::pico, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'p'); }
-	static std::u16string prefix() { return std::u16string(u"pico"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"p", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"pico", 4); }
 };
 
 template <>
 struct ratio_traits<std::pico, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'p'); }
-	static std::u32string prefix() { return std::u32string(U"pico"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"p", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"pico", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::pico, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'p'); }
-	static std::wstring prefix() { return std::wstring(L"pico"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"p", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"pico", 4); }
 };
 
 
@@ -181,30 +191,30 @@ struct ratio_traits<std::pico, wchar_t>
 template <>
 struct ratio_traits<std::nano, char>
 {
-	static std::string symbol() { return std::string(1, 'n'); }
-	static std::string prefix() { return std::string("nano"); }
+    static std::string_view symbol() { return std::string_view("n", 1); }
+    static std::string_view prefix() { return std::string_view("nano", 4); }
 };
 
 template <>
 struct ratio_traits<std::nano, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'n'); }
-	static std::u16string prefix() { return std::u16string(u"nano"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"n", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"nano", 4); }
 };
 
 template <>
 struct ratio_traits<std::nano, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'n'); }
-	static std::u32string prefix() { return std::u32string(U"nano"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"n", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"nano", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::nano, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'n'); }
-	static std::wstring prefix() { return std::wstring(L"nano"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"n", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"nano", 4); }
 };
 
 
@@ -213,30 +223,30 @@ struct ratio_traits<std::nano, wchar_t>
 template <>
 struct ratio_traits<std::micro, char>
 {
-    static std::string symbol() { return std::string("\xC2\xB5"); } // \xC2\xB5
-	static std::string prefix() { return std::string("micro"); }
+    static std::string_view symbol() { return std::string_view("\xC2\xB5", 2); } // \xC2\xB5
+    static std::string_view prefix() { return std::string_view("micro", 5); }
 };
 
 template <>
 struct ratio_traits<std::micro, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'\xB5'); }
-	static std::u16string prefix() { return std::u16string(u"micro"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"\xB5", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"micro", 5); }
 };
 
 template <>
 struct ratio_traits<std::micro, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'\xB5'); }
-	static std::u32string prefix() { return std::u32string(U"micro"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"\xB5", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"micro", 5); }
 };
 
 
 template <>
 struct ratio_traits<std::micro, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'\xB5'); }
-	static std::wstring prefix() { return std::wstring(L"micro"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"\xB5", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"micro", 5); }
 };
 
 
@@ -247,31 +257,31 @@ struct ratio_traits<std::micro, wchar_t>
 template <>
 struct ratio_traits<std::milli, char>
 {
-	static std::string symbol() { return std::string(1, 'm'); }
-	static std::string prefix() { return std::string("milli"); }
+    static std::string_view symbol() { return std::string_view("m", 1); }
+    static std::string_view prefix() { return std::string_view("milli", 5); }
 };
 
 
 template <>
 struct ratio_traits<std::milli, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'm'); }
-	static std::u16string prefix() { return std::u16string(u"milli"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"m", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"milli", 5); }
 };
 
 template <>
 struct ratio_traits<std::milli, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'm'); }
-	static std::u32string prefix() { return std::u32string(U"milli"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"m", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"milli", 5); }
 };
 
 
 template <>
 struct ratio_traits<std::milli, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'm'); }
-	static std::wstring prefix() { return std::wstring(L"milli"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"m", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"milli", 5); }
 };
 
 
@@ -282,8 +292,8 @@ struct ratio_traits<std::milli, wchar_t>
 template <>
 struct ratio_traits<std::centi, char>
 {
-	static std::string symbol() { return std::string(1, 'c'); }
-	static std::string prefix() { return std::string("centi"); }
+    static std::string_view symbol() { return std::string_view("c", 1); }
+    static std::string_view prefix() { return std::string_view("centi", 5); }
 };
 
 
@@ -291,22 +301,22 @@ struct ratio_traits<std::centi, char>
 template <>
 struct ratio_traits<std::centi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'c'); }
-	static std::u16string prefix() { return std::u16string(u"centi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"c", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"centi", 5); }
 };
 
 template <>
 struct ratio_traits<std::centi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'c'); }
-	static std::u32string prefix() { return std::u32string(U"centi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"c", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"centi", 5); }
 };
 
 template <>
 struct ratio_traits<std::centi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'c'); }
-	static std::wstring prefix() { return std::wstring(L"centi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"c", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"centi", 5); }
 };
 
 
@@ -317,31 +327,31 @@ struct ratio_traits<std::centi, wchar_t>
 template <>
 struct ratio_traits<std::deci, char>
 {
-	static std::string symbol() { return std::string(1, 'd'); }
-	static std::string prefix() { return std::string("deci"); }
+    static std::string_view symbol() { return std::string_view("d", 1); }
+    static std::string_view prefix() { return std::string_view("deci", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::deci, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'd'); }
-	static std::u16string prefix() { return std::u16string(u"deci"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"d", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"deci", 4); }
 };
 
 template <>
 struct ratio_traits<std::deci, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'd'); }
-	static std::u32string prefix() { return std::u32string(U"deci"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"d", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"deci", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::deci, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'd'); }
-	static std::wstring prefix() { return std::wstring(L"deci"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"d", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"deci", 4); }
 };
 
 
@@ -354,29 +364,29 @@ struct ratio_traits<std::deci, wchar_t>
 template <>
 struct ratio_traits<std::deca, char>
 {
-	static std::string symbol() { return std::string("da"); }
-	static std::string prefix() { return std::string("deca"); }
+    static std::string_view symbol() { return std::string_view("da", 2); }
+    static std::string_view prefix() { return std::string_view("deca", 4); }
 };
 
 template <>
 struct ratio_traits<std::deca, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"da"); }
-	static std::u16string prefix() { return std::u16string(u"deca"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"da", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"deca", 4); }
 };
 
 template <>
 struct ratio_traits<std::deca, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"da"); }
-	static std::u32string prefix() { return std::u32string(U"deca"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"da", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"deca", 4); }
 };
 
 template <>
 struct ratio_traits<std::deca, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"da"); }
-	static std::wstring prefix() { return std::wstring(L"deca"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"da", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"deca", 4); }
 };
 
 
@@ -388,29 +398,29 @@ struct ratio_traits<std::deca, wchar_t>
 template <>
 struct ratio_traits<std::hecto, char>
 {
-	static std::string symbol() { return std::string(1, 'h'); }
-	static std::string prefix() { return std::string("hecto"); }
+    static std::string_view symbol() { return std::string_view("h", 1); }
+    static std::string_view prefix() { return std::string_view("hecto", 5); }
 };
 
 template <>
 struct ratio_traits<std::hecto, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'h'); }
-	static std::u16string prefix() { return std::u16string(u"hecto"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"h", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"hecto", 5); }
 };
 
 template <>
 struct ratio_traits<std::hecto, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'h'); }
-	static std::u32string prefix() { return std::u32string(U"hecto"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"h", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"hecto", 5); }
 };
 
 template <>
 struct ratio_traits<std::hecto, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'h'); }
-	static std::wstring prefix() { return std::wstring(L"hecto"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"h", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"hecto", 5); }
 };
 
 
@@ -422,30 +432,30 @@ struct ratio_traits<std::hecto, wchar_t>
 template <>
 struct ratio_traits<std::kilo, char>
 {
-	static std::string symbol() { return std::string(1, 'k'); }
-	static std::string prefix() { return std::string("kilo"); }
+    static std::string_view symbol() { return std::string_view("k", 1); }
+    static std::string_view prefix() { return std::string_view("kilo", 4); }
 };
 
 template <>
 struct ratio_traits<std::kilo, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'k'); }
-	static std::u16string prefix() { return std::u16string(u"kilo"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"k", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"kilo", 4); }
 };
 
 template <>
 struct ratio_traits<std::kilo, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'k'); }
-	static std::u32string prefix() { return std::u32string(U"kilo"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"k", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"kilo", 4); }
 };
 
 
 template <>
 struct ratio_traits<std::kilo, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'k'); }
-	static std::wstring prefix() { return std::wstring(L"kilo"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"k", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"kilo", 4); }
 };
 
 
@@ -457,29 +467,29 @@ struct ratio_traits<std::kilo, wchar_t>
 template <>
 struct ratio_traits<std::mega, char>
 {
-	static std::string symbol() { return std::string(1, 'M'); }
-	static std::string prefix() { return std::string("mega"); }
+    static std::string_view symbol() { return std::string_view("M", 1); }
+    static std::string_view prefix() { return std::string_view("mega", 4); }
 };
 
 template <>
 struct ratio_traits<std::mega, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'M'); }
-	static std::u16string prefix() { return std::u16string(u"mega"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"M", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"mega", 4); }
 };
 
 template <>
 struct ratio_traits<std::mega, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'M'); }
-	static std::u32string prefix() { return std::u32string(U"mega"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"M", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"mega", 4); }
 };
 
 template <>
 struct ratio_traits<std::mega, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'M'); }
-	static std::wstring prefix() { return std::wstring(L"mega"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"M", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"mega", 4); }
 };
 
 
@@ -490,29 +500,29 @@ struct ratio_traits<std::mega, wchar_t>
 template <>
 struct ratio_traits<std::giga, char>
 {
-	static std::string symbol() { return std::string(1, 'G'); }
-	static std::string prefix() { return std::string("giga"); }
+    static std::string_view symbol() { return std::string_view("G", 1); }
+    static std::string_view prefix() { return std::string_view("giga", 4); }
 };
 
 template <>
 struct ratio_traits<std::giga, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'G'); }
-	static std::u16string prefix() { return std::u16string(u"giga"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"G", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"giga", 4); }
 };
 
 template <>
 struct ratio_traits<std::giga, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'G'); }
-	static std::u32string prefix() { return std::u32string(U"giga"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"G", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"giga", 4); }
 };
 
 template <>
 struct ratio_traits<std::giga, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'G'); }
-	static std::wstring prefix() { return std::wstring(L"giga"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"G", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"giga", 4); }
 };
 
 
@@ -523,29 +533,29 @@ struct ratio_traits<std::giga, wchar_t>
 template <>
 struct ratio_traits<std::tera, char>
 {
-	static std::string symbol() { return std::string(1, 'T'); }
-	static std::string prefix() { return std::string("tera"); }
+    static std::string_view symbol() { return std::string_view("T", 1); }
+    static std::string_view prefix() { return std::string_view("tera", 4); }
 };
 
 template <>
 struct ratio_traits<std::tera, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'T'); }
-	static std::u16string prefix() { return std::u16string(u"tera"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"T", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"tera", 4); }
 };
 
 template <>
 struct ratio_traits<std::tera, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'T'); }
-	static std::u32string prefix() { return std::u32string(U"tera"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"T", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"tera", 4); }
 };
 
 template <>
 struct ratio_traits<std::tera, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'T'); }
-	static std::wstring prefix() { return std::wstring(L"tera"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"T", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"tera", 4); }
 };
 
 
@@ -556,29 +566,29 @@ struct ratio_traits<std::tera, wchar_t>
 template <>
 struct ratio_traits<std::peta, char>
 {
-	static std::string symbol() { return std::string(1, 'P'); }
-	static std::string prefix() { return std::string("peta"); }
+    static std::string_view symbol() { return std::string_view("P", 1); }
+    static std::string_view prefix() { return std::string_view("peta", 4); }
 };
 
 template <>
 struct ratio_traits<std::peta, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'P'); }
-	static std::u16string prefix() { return std::u16string(u"peta"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"P", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"peta", 4); }
 };
 
 template <>
 struct ratio_traits<std::peta, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'P'); }
-	static std::u32string prefix() { return std::u32string(U"peta"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"P", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"peta", 4); }
 };
 
 template <>
 struct ratio_traits<std::peta, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'P'); }
-	static std::wstring prefix() { return std::wstring(L"peta"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"P", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"peta", 4); }
 };
 
 
@@ -590,29 +600,29 @@ struct ratio_traits<std::peta, wchar_t>
 template <>
 struct ratio_traits<std::exa, char>
 {
-	static std::string symbol() { return std::string(1, 'E'); }
-	static std::string prefix() { return std::string("exa"); }
+    static std::string_view symbol() { return std::string_view("E", 1); }
+    static std::string_view prefix() { return std::string_view("exa", 3); }
 };
 
 template <>
 struct ratio_traits<std::exa, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(1, u'E'); }
-	static std::u16string prefix() { return std::u16string(u"exa"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"E", 1); }
+    static std::u16string_view prefix() { return std::u16string_view(u"exa", 3); }
 };
 
 template <>
 struct ratio_traits<std::exa, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(1, U'E'); }
-	static std::u32string prefix() { return std::u32string(U"exa"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"E", 1); }
+    static std::u32string_view prefix() { return std::u32string_view(U"exa", 3); }
 };
 
 template <>
 struct ratio_traits<std::exa, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(1, L'E'); }
-	static std::wstring prefix() { return std::wstring(L"exa"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"E", 1); }
+    static std::wstring_view prefix() { return std::wstring_view(L"exa", 3); }
 };
 
 
@@ -623,29 +633,29 @@ struct ratio_traits<std::exa, wchar_t>
 template <>
 struct ratio_traits<kibi, char>
 {
-	static std::string symbol() { return std::string("Ki"); }
-	static std::string prefix() { return std::string("kibi"); }
+    static std::string_view symbol() { return std::string_view("Ki", 2); }
+    static std::string_view prefix() { return std::string_view("kibi", 4); }
 };
 
 template <>
 struct ratio_traits<kibi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Ki"); }
-	static std::u16string prefix() { return std::u16string(u"kibi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Ki", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"kibi", 4); }
 };
 
 template <>
 struct ratio_traits<kibi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Ki"); }
-	static std::u32string prefix() { return std::u32string(U"kibi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Ki", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"kibi", 4); }
 };
 
 template <>
 struct ratio_traits<kibi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Ki"); }
-	static std::wstring prefix() { return std::wstring(L"kibi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Ki", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"kibi", 4); }
 };
 
 
@@ -656,30 +666,30 @@ struct ratio_traits<kibi, wchar_t>
 template <>
 struct ratio_traits<mebi, char>
 {
-	static std::string symbol() { return std::string("Mi"); }
-	static std::string prefix() { return std::string("mebi"); }
+    static std::string_view symbol() { return std::string_view("Mi", 2); }
+    static std::string_view prefix() { return std::string_view("mebi", 4); }
 };
 
 template <>
 struct ratio_traits<mebi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Mi"); }
-	static std::u16string prefix() { return std::u16string(u"mebi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Mi", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"mebi", 4); }
 };
 
 template <>
 struct ratio_traits<mebi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Mi"); }
-	static std::u32string prefix() { return std::u32string(U"mebi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Mi", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"mebi", 4); }
 };
 
 
 template <>
 struct ratio_traits<mebi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Mi"); }
-	static std::wstring prefix() { return std::wstring(L"mebi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Mi", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"mebi", 4); }
 };
 
 
@@ -691,29 +701,29 @@ struct ratio_traits<mebi, wchar_t>
 template <>
 struct ratio_traits<gibi, char>
 {
-	static std::string symbol() { return std::string("Gi"); }
-	static std::string prefix() { return std::string("gibi"); }
+    static std::string_view symbol() { return std::string_view("Gi", 2); }
+    static std::string_view prefix() { return std::string_view("gibi", 4); }
 };
 
 template <>
 struct ratio_traits<gibi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Gi"); }
-	static std::u16string prefix() { return std::u16string(u"gibi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Gi", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"gibi", 4); }
 };
 
 template <>
 struct ratio_traits<gibi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Gi"); }
-	static std::u32string prefix() { return std::u32string(U"gibi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Gi", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"gibi", 4); }
 };
 
 template <>
 struct ratio_traits<gibi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Gi"); }
-	static std::wstring prefix() { return std::wstring(L"gibi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Gi", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"gibi", 4); }
 };
 
 
@@ -724,29 +734,29 @@ struct ratio_traits<gibi, wchar_t>
 template <>
 struct ratio_traits<tebi, char>
 {
-	static std::string symbol() { return std::string("Ti"); }
-	static std::string prefix() { return std::string("tebi"); }
+    static std::string_view symbol() { return std::string_view("Ti", 2); }
+    static std::string_view prefix() { return std::string_view("tebi", 4); }
 };
 
 template <>
 struct ratio_traits<tebi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Ti"); }
-	static std::u16string prefix() { return std::u16string(u"tebi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Ti", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"tebi", 4); }
 };
 
 template <>
 struct ratio_traits<tebi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Ti"); }
-	static std::u32string prefix() { return std::u32string(U"tebi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Ti", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"tebi", 4); }
 };
 
 template <>
 struct ratio_traits<tebi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Ti"); }
-	static std::wstring prefix() { return std::wstring(L"tebi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Ti", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"tebi", 4); }
 };
 
 
@@ -758,59 +768,59 @@ struct ratio_traits<tebi, wchar_t>
 template <>
 struct ratio_traits<pebi, char>
 {
-	static std::string symbol() { return std::string("Pi"); }
-	static std::string prefix() { return std::string("pebi"); }
+    static std::string_view symbol() { return std::string_view("Pi", 2); }
+    static std::string_view prefix() { return std::string_view("pebi", 4); }
 };
 
 
 template <>
 struct ratio_traits<pebi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Pi"); }
-	static std::u16string prefix() { return std::u16string(u"pebi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Pi", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"pebi", 4); }
 };
 
 template <>
 struct ratio_traits<pebi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Pi"); }
-	static std::u32string prefix() { return std::u32string(U"pebi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Pi", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"pebi", 4); }
 };
 
 template <>
 struct ratio_traits<pebi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Pi"); }
-	static std::wstring prefix() { return std::wstring(L"pebi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Pi", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"pebi", 4); }
 };
 
 template <>
 struct ratio_traits<exbi, char>
 {
-	static std::string symbol() { return std::string("Ei"); }
-	static std::string prefix() { return std::string("exbi"); }
+    static std::string_view symbol() { return std::string_view("Ei", 2); }
+    static std::string_view prefix() { return std::string_view("exbi", 4); }
 };
 
 template <>
 struct ratio_traits<exbi, char16_t>
 {
-	static std::u16string symbol() { return std::u16string(u"Ei"); }
-	static std::u16string prefix() { return std::u16string(u"exbi"); }
+    static std::u16string_view symbol() { return std::u16string_view(u"Ei", 2); }
+    static std::u16string_view prefix() { return std::u16string_view(u"exbi", 4); }
 };
 
 template <>
 struct ratio_traits<exbi, char32_t>
 {
-	static std::u32string symbol() { return std::u32string(U"Ei"); }
-	static std::u32string prefix() { return std::u32string(U"exbi"); }
+    static std::u32string_view symbol() { return std::u32string_view(U"Ei", 2); }
+    static std::u32string_view prefix() { return std::u32string_view(U"exbi", 4); }
 };
 
 
 template <>
 struct ratio_traits<exbi, wchar_t>
 {
-	static std::wstring symbol() { return std::wstring(L"Ei"); }
-	static std::wstring prefix() { return std::wstring(L"exbi"); }
+    static std::wstring_view symbol() { return std::wstring_view(L"Ei", 2); }
+    static std::wstring_view prefix() { return std::wstring_view(L"exbi", 4); }
 };
 
 
