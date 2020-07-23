@@ -620,7 +620,7 @@ constexpr bool operator>= (const std::basic_string<_Elem, _Traits, _Alloc>& lhs,
 template<class _Elem, class _Traits>
 inline ::std::basic_ostream<_Elem, _Traits>& operator<< (::std::basic_ostream<_Elem, _Traits>& stream,
 												  const basic_string_view<_Elem, _Traits>& sv) {
-	return (stream.write(sv.data(), sv.size()));
+    return ( sv.empty() ? (stream) : (stream.write(sv.data(), sv.size())) );
 }
 
 // 21.4.5 Hash support
