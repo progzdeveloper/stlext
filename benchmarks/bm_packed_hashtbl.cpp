@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <stlext/containers/packed_hashtbl.hpp>
 
-#include <stlext/containers/lru_cache.hpp>
+#include <stlext/containers/cache.hpp>
 //#include <stlext/containers/packed_lru_cache.h>
 
 #include <benchmark/benchmark.h>

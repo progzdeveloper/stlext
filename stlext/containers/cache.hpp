@@ -42,12 +42,12 @@ _STDX_BEGIN
 
 template<
 class _Key,
-        class _Value,
-        class _Hasher = std::hash<_Key>,
-        class _Comp = std::equal_to<_Key>,
-        class _Alloc = std::allocator<char>
-        >
-        struct cachemap_traits
+    class _Value,
+    class _Hasher = std::hash<_Key>,
+    class _Comp = std::equal_to<_Key>,
+    class _Alloc = std::allocator<char>
+>
+struct cachemap_traits
 {
     typedef _Key   key_type;
     typedef _Value mapped_type;
@@ -158,11 +158,11 @@ protected:
 
 
 template<
-        class _Key,
-        class _Hasher = std::hash<_Key>,
-        class _Comp = std::equal_to<_Key>,
-        class _Alloc = std::allocator<char>
-        >
+    class _Key,
+    class _Hasher = std::hash<_Key>,
+    class _Comp = std::equal_to<_Key>,
+    class _Alloc = std::allocator<char>
+>
 struct cacheset_traits
 {
     typedef _Key   key_type;

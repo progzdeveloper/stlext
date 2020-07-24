@@ -4,7 +4,7 @@
 #include <string>
 #include <algorithm>
 
-#include <stlext/containers/lru_cache.hpp>
+#include <stlext/containers/cache.hpp>
 
 
 TEST_CASE("lru_cacheset/insert", "[containers]")
