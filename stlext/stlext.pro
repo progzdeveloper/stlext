@@ -173,7 +173,8 @@ HEADERS += \
     containers/cache.hpp \
     algorithm/ext/kway_merge.hpp \
     algorithm/ext/kway_union.hpp \
-    algorithm/ext/kway_utility.hpp
+    algorithm/ext/kway_utility.hpp \
+    functional/symmetric_operation.hpp
 
 SOURCES +=
 
