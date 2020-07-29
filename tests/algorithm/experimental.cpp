@@ -188,32 +188,53 @@ TEST_CASE("algorithms/is_unique", "[algorithm.experimental]")
 								  std::istreambuf_iterator<wchar_t>()));
 }
 
-
-TEST_CASE("algorithms/share_element", "[algorithm.experimental]")
-{
-    bool has_shared = false;
-    std::vector<int> s1 = { -8,  -5,  -1,  0,  3,  5,  7, 8, 9 };
-    std::vector<int> s2 = { -19, -17, -9, -6, -4, -3, -2, 0, 2 };
-    std::vector<int> s3 = { -19, -17, -9, -6, -4, -3, -2, 1, 2 };
-    has_shared = stdx::share_element(s1.begin(), s1.end(), s2.begin(), s2.end());
-    REQUIRE(has_shared);
-
-    has_shared = stdx::share_element(s1.begin(), s1.end(), s3.begin(), s3.end());
-    REQUIRE(!has_shared);
-}
-
-
 TEST_CASE("algorithms/kadane_sum", "[algorithm.experimental]")
 {
-	std::vector<int> v = { 0, -1, -2, 3, 1, -2, 5, 3, 4, -1, 0 };
-	auto max_weight = stdx::kadane_max(v.begin(), v.end());
-	auto min_weight = stdx::kadane_min(v.begin(), v.end());
-	auto max_result = stdx::kadane_range_max(v.begin(), v.end());
-	auto min_result = stdx::kadane_range_min(v.begin(), v.end());
+    std::vector<int> v = { 0, -1, -2, 3, 1, -2, 5, 3, 4, -1, 0 };
+    auto max_weight = stdx::kadane_max(v.begin(), v.end());
+    auto min_weight = stdx::kadane_min(v.begin(), v.end());
+    auto max_result = stdx::kadane_range_max(v.begin(), v.end());
+    auto min_result = stdx::kadane_range_min(v.begin(), v.end());
 
-	REQUIRE(std::get<0>(max_result) == max_weight);
-	REQUIRE(std::get<0>(min_result) == min_weight);
+    REQUIRE(std::get<0>(max_result) == max_weight);
+    REQUIRE(std::get<0>(min_result) == min_weight);
 }
+
+
+
+TEST_CASE("algorithms/simplify", "[algorithm.experimental]")
+{
+    std::string s = "\r   \nHello, \tWorld ! \n  ?";
+    auto escape = [](char c) {
+        return (c == '\r' || c == '\n' || c == '\t' ||
+                c == ' '  || c == '!' ||
+                c == '?'  || c == '&' ||
+                c == ','  || c == '.');
+    };
+    s.erase(stdx::simplify(s.begin(), s.end(), s.begin(), escape, ' '), s.end());
+    REQUIRE(s == "Hello World");
+
+    std::string s2 = "Hello, \tWorld ! \n  ?";
+    s2.erase(stdx::simplify(s2.begin(), s2.end(), s2.begin(), escape, ' '), s2.end());
+    REQUIRE(s2 == "Hello World");
+
+    std::string s3 = "\r   \nHello, \tWorld";
+    s3.erase(stdx::simplify(s3.begin(), s3.end(), s3.begin(), escape, ' '), s3.end());
+    REQUIRE(s3 == "Hello World");
+
+    std::ostringstream output;
+    std::stringstream buffer;
+    buffer << "Hello, \tWorld ! \n  ? \n"
+           << "Hello, \tWorld ! \n  ?"
+           << "\r   \nHello, \tWorld              ";
+
+    stdx::simplify(std::istreambuf_iterator<char>(buffer),
+                   std::istreambuf_iterator<char>(),
+                   std::ostreambuf_iterator<char>(output), escape, ' ');
+
+    REQUIRE(output.str() == "Hello World Hello World Hello World");
+}
+
 
 TEST_CASE("algorithms/split", "[algorithm.experimental]")
 {
@@ -290,42 +311,58 @@ TEST_CASE("algorithms/split_copy", "[algorithm.experimental]")
 
 TEST_CASE("algorithms/regex_split", "[algorithm.experimental]")
 {
-	const char* cexpr = "(\\w+)";
-	const char* csrc = "Hello C++ World!";
+    const char* cexpr = "(\\w+)";
+    const char* csrc = "Hello C++ World!";
 
-	std::regex rx(cexpr);
-	std::string expr(cexpr);
-	std::string str(csrc);
-	
-	std::vector<std::string> results;
-	results.reserve(3);
+    std::regex rx(cexpr);
+    std::string expr(cexpr);
+    std::string str(csrc);
 
-	stdx::regex_split(cexpr, csrc, std::back_inserter(results));
-	REQUIRE(results[0] == "Hello");
-	REQUIRE(results[1] == "C");
-	REQUIRE(results[2] == "World");
-	results.clear();
+    std::vector<std::string> results;
+    results.reserve(3);
 
-	stdx::regex_split(expr, str, std::back_inserter(results));
-	REQUIRE(results[0] == "Hello");
-	REQUIRE(results[1] == "C");
-	REQUIRE(results[2] == "World");
-	results.clear();
+    stdx::regex_split(cexpr, csrc, std::back_inserter(results));
+    REQUIRE(results[0] == "Hello");
+    REQUIRE(results[1] == "C");
+    REQUIRE(results[2] == "World");
+    results.clear();
+
+    stdx::regex_split(expr, str, std::back_inserter(results));
+    REQUIRE(results[0] == "Hello");
+    REQUIRE(results[1] == "C");
+    REQUIRE(results[2] == "World");
+    results.clear();
 
 
-	stdx::regex_split(rx, csrc, std::back_inserter(results));
-	REQUIRE(results[0] == "Hello");
-	REQUIRE(results[1] == "C");
-	REQUIRE(results[2] == "World");
-	results.clear();
+    stdx::regex_split(rx, csrc, std::back_inserter(results));
+    REQUIRE(results[0] == "Hello");
+    REQUIRE(results[1] == "C");
+    REQUIRE(results[2] == "World");
+    results.clear();
 
-	stdx::regex_split(rx, str, std::back_inserter(results));
-	REQUIRE(results[0] == "Hello");
-	REQUIRE(results[1] == "C");
-	REQUIRE(results[2] == "World");
-	results.clear();
+    stdx::regex_split(rx, str, std::back_inserter(results));
+    REQUIRE(results[0] == "Hello");
+    REQUIRE(results[1] == "C");
+    REQUIRE(results[2] == "World");
+    results.clear();
 
 }
+
+
+
+TEST_CASE("algorithms/share_element", "[algorithm.experimental]")
+{
+    bool has_shared = false;
+    std::vector<int> s1 = { -8,  -5,  -1,  0,  3,  5,  7, 8, 9 };
+    std::vector<int> s2 = { -19, -17, -9, -6, -4, -3, -2, 0, 2 };
+    std::vector<int> s3 = { -19, -17, -9, -6, -4, -3, -2, 1, 2 };
+    has_shared = stdx::share_element(s1.begin(), s1.end(), s2.begin(), s2.end());
+    REQUIRE(has_shared);
+
+    has_shared = stdx::share_element(s1.begin(), s1.end(), s3.begin(), s3.end());
+    REQUIRE(!has_shared);
+}
+
 
 
 TEST_CASE("algorithms/kway_merge", "[algorithm.experimental]")

@@ -40,7 +40,7 @@ _STDX_BEGIN
 /*!
  * \brief simplify simplifies input range by removing consecutive elements that satisfy
  * the predicate and replace them by a single replacement element
- * \tparam _BiIt models bidirectional iterator
+ * \tparam _BiIt models input iterator
  * \tparam _OutIt models output iterator
  * \tparam _Pred models unary predicate
  * \tparam _Elem models single element
@@ -52,43 +52,42 @@ _STDX_BEGIN
  * \return output iterator
  */
 template<
-    class _BiIt,
+    class _InIt,
     class _OutIt,
     class _Pred,
     class _Elem
 >
-_OutIt simplify(_BiIt first, _BiIt last, _OutIt out, _Pred pr, _Elem e)
+_OutIt simplify(_InIt first, _InIt last, _OutIt out, _Pred pr, _Elem e)
 {
     using namespace std;
 
     // the most portable way to negate predicate
     auto not_pr = [&pr](char c) { return !pr(c); };
 
-    // find first non-escaped element in sequence
-    first = find_if(first, last, not_pr);
-    if (first == last) {
-        return (out);
-    }
-
-    // find last non-escaped element in sequence
-    last = find_if(make_reverse_iterator(last),
-                   make_reverse_iterator(first), not_pr).base();
-
-    size_t count = 0; // counter of escaped elements
-    for (; first != last; ++first)
+    bool flag = true; // is first element or not
+    for (; first != last; )
     {
-        // check if we got non-escaped element
         if (!pr(*first)) {
-            count = 0; // reset counter
-            *out = *first; ++out; // copy element
-            continue; // continue the scan loop
+            *out = *first; ++out; // copy element to output
+            ++first;
+            flag = false; // clear flag
+            continue;
         }
 
-        // otherwise we got unwanted element
-        if (count < 1) { // there is multiply occuriences of escaped element(s)
-            *out = e; ++out; // copy only one replacement elemnt
+        if (flag) { // first escaped element must NOT be writed to output
+            if (++first == last) {
+                break; // end-of-data: bailng out
+            }
+            flag = false; // clear flag
+            first = find_if(first, last, not_pr); // find next non-escaped element
+        } else { // i-th element
+            first = find_if(++first, last, not_pr); // find next non-escaped element
+            if (first == last) {
+                break; // end-of-data: bailng out
+            }
+            *out = e; ++out; // write replaced element to output
         }
-        ++count; // increase counter of escaped elements
+
     }
     return (out);
 }
