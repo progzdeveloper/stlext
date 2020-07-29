@@ -328,3 +328,84 @@ TEST_CASE("algorithms/regex_split", "[algorithm.experimental]")
 }
 
 
+TEST_CASE("algorithms/kway_merge", "[algorithm.experimental]")
+{
+    using namespace std;
+    vector< vector<int> > arr{ { 2, 2, 2, 6, 6, 12 },
+                               { 1, 2, 2, 6, 6, 6, 9 },
+                               { 23, 34, 90, 2000 } };
+
+    vector<int> desired_less = {
+        1, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 9, 12, 23, 34, 90, 2000
+    };
+
+    vector<int> desired_greater = {
+        2000, 90, 34, 23, 12, 9, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 1
+    };
+
+    typedef vector<int>::iterator iter_t;
+    typedef std::pair<iter_t, iter_t> iter_pair;
+    vector< iter_pair > inputs {
+            { arr[0].begin(), arr[0].end() },
+            { arr[1].begin(), arr[1].end() },
+            { arr[2].begin(), arr[2].end() }
+    };
+
+    vector<int> merged;
+    merged.reserve(arr[0].size() + arr[1].size() + arr[2].size());
+
+    stdx::kway_merge(inputs, back_inserter(merged));
+    REQUIRE(merged == desired_less);
+    merged.clear();
+
+
+
+    for (auto& x : arr) {
+        std::sort(x.begin(), x.end(), std::greater<>{});
+    }
+
+    stdx::kway_merge(arr, back_inserter(merged), std::greater<>{});
+    REQUIRE(merged == desired_greater);
+}
+
+
+TEST_CASE("algorithms/kway_union", "[algorithm.experimental]")
+{
+    using namespace std;
+    vector< vector<int> > arr{ { 2, 2, 2, 6, 6, 12 },
+                               { 1, 2, 2, 6, 6, 6, 9 },
+                               { 23, 34, 90, 2000 } };
+
+    vector<int> desired_less = {
+        1, 2, 6, 9, 12, 23, 34, 90, 2000
+    };
+
+    vector<int> desired_greater = {
+        2000, 90, 34, 23, 12, 9, 6, 2, 1
+    };
+
+    typedef vector<int>::iterator iter_t;
+    typedef std::pair<iter_t, iter_t> iter_pair;
+    vector< iter_pair > inputs {
+            { arr[0].begin(), arr[0].end() },
+            { arr[1].begin(), arr[1].end() },
+            { arr[2].begin(), arr[2].end() }
+    };
+
+    vector<int> merged;
+    merged.reserve(arr[0].size() + arr[1].size() + arr[2].size());
+
+    stdx::kway_union(inputs, back_inserter(merged));
+    REQUIRE(merged == desired_less);
+    merged.clear();
+
+
+    for (auto& x : arr) {
+        std::sort(x.begin(), x.end(), std::greater<>{});
+    }
+
+    stdx::kway_union(arr, back_inserter(merged), std::greater<>{});
+    REQUIRE(merged == desired_greater);
+}
+
+

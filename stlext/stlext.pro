@@ -80,7 +80,6 @@ HEADERS += \
     components/reflect.hpp \
     components/stream_scanner.hpp \
     containers/circular_queue.hpp \
-    containers/lru_cache.hpp \
     containers/packed_hashtbl.hpp \
     containers/packed_lru_cache.hpp \
     containers/priority_map.hpp \
@@ -169,7 +168,12 @@ HEADERS += \
     bitvector/bitview.hpp \
     bitvector/bitalgo.hxx \
     algorithm/ext/share_element.hpp \
-    iostreams/itos.hpp
+    iostreams/itos.hpp \
+    iostreams/iomanipbase.hpp \
+    containers/cache.hpp \
+    algorithm/ext/kway_merge.hpp \
+    algorithm/ext/kway_union.hpp \
+    algorithm/ext/kway_utility.hpp
 
 SOURCES +=
 
