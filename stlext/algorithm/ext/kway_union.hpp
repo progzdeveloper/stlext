@@ -132,7 +132,7 @@ _OutIt __kway_union_small(const std::vector< _Container >& inputs, _OutIt out, _
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         auto first = utility::begin(*it);
         auto last  = utility::end(*it);
-        if (first != last)
+        if (first != last) // exclude empty ranges
             queue.emplace_back(first, last);
     }
     utility::__small_sort(queue.begin(), queue.end());
@@ -202,7 +202,7 @@ _OutIt kway_union(const std::vector< _Container >& inputs, _OutIt out, _Comp com
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         auto first = utility::begin(*it);
         auto last  = utility::end(*it);
-        if (first != last)
+        if (first != last) // exclude empty ranges
             queue.emplace(first, last);
     }
 

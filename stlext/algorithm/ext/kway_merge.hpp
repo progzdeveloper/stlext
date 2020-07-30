@@ -61,7 +61,7 @@ _OutIt __kway_merge_large(const std::vector< _Container >& inputs, _OutIt out, _
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         auto first = utility::begin(*it);
         auto last  = utility::end(*it);
-        if (first != last)
+        if (first != last) // exclude empty ranges
             queue.emplace(first, last);
     }
 
@@ -115,7 +115,7 @@ _OutIt __kway_merge_small(const std::vector< _Container >& inputs, _OutIt out, _
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         auto first = utility::begin(*it);
         auto last  = utility::end(*it);
-        if (first != last)
+        if (first != last) // exclude empty ranges
             queue.emplace_back(first, last);
     }
     utility::__small_sort(queue.begin(), queue.end());
@@ -167,7 +167,7 @@ _OutIt kway_merge(const std::vector< _Container >& inputs, _OutIt out, _Comp c)
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         auto first = utility::begin(*it);
         auto last  = utility::end(*it);
-        if (first != last)
+        if (first != last) // exclude empty ranges
             queue.emplace(first, last);
     }
 

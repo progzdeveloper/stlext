@@ -233,6 +233,10 @@ TEST_CASE("algorithms/simplify", "[algorithm.experimental]")
                    std::ostreambuf_iterator<char>(output), escape, ' ');
 
     REQUIRE(output.str() == "Hello World Hello World Hello World");
+
+    std::string s4 = " Hello World ";
+    s4.erase(stdx::simplify(s4.begin(), s4.end(), s4.begin(), escape, ' '), s4.end());
+    REQUIRE(s4 == "Hello World");
 }
 
 

@@ -67,15 +67,15 @@ _OutIt simplify(_InIt first, _InIt last, _OutIt out, _Pred pr, _Elem e)
     bool flag = true; // is first element or not
     for (; first != last; )
     {
-        if (!pr(*first)) {
+        if (!pr(*first)) { // if non-escaped element
             *out = *first; ++out; // copy element to output
-            ++first;
+            ++first; // move to next element
             flag = false; // clear flag
             continue;
         }
 
         if (flag) { // first escaped element must NOT be writed to output
-            if (++first == last) {
+            if (++first == last) { // move to next element
                 break; // end-of-data: bailng out
             }
             flag = false; // clear flag
@@ -87,7 +87,6 @@ _OutIt simplify(_InIt first, _InIt last, _OutIt out, _Pred pr, _Elem e)
             }
             *out = e; ++out; // write replaced element to output
         }
-
     }
     return (out);
 }
