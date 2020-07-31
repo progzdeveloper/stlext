@@ -449,4 +449,105 @@ TEST_CASE("algorithms/kway_union", "[algorithm.experimental]")
     REQUIRE(merged == desired_greater);
 }
 
+TEST_CASE("algorithms/kway_intersect", "[algorithm.experimental]")
+{
+    using namespace std;
+
+    vector< vector<int> > arr00{ {}, {} };
+    vector< vector<int> > arr01{ {}, { -3, -1, 2, 6, 9} };
+    vector< vector<int> > arr02{ {}, { -3, -1, 2, 6, 9}, { -3, -1, 2, 6, 9 } };
+
+    vector< vector<int> > arr1{ { -5, -3, -2, -2, -1, -1, 2, 2, 2, 6, 6, 9, 12 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 } };
+
+    vector< vector<int> > arr2{ { -5, -3, -2, -2, -1, -1, 2, 2, 2, 6, 6, 9, 12 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 } };
+
+    vector< vector<int> > arr3{ { -5, -3, -2, -2, -1, -1, 2, 2, 2, 6, 6, 9, 12 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 },
+                                { -5, -3, -2, -2, -1, -1, 2, 2, 2, 6, 6, 9, 12 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 },
+                                { -5, -3, -2, -2, -1, -1, 2, 2, 2, 6, 6, 9, 12 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 },
+                                { -4, -3, -1, 1, 2, 2, 6, 6, 6, 9 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 },
+                                { -7, -3, -1, 2, 6, 7, 8, 9, 23, 34, 90, 2000 } };
+
+
+    vector<int> desired = { -3, -1, 2, 6, 9 };
+
+    typedef vector<int>::iterator iter_t;
+    typedef std::pair<iter_t, iter_t> iter_pair;
+
+    vector< iter_pair > inputs00 {
+            { arr00[0].begin(), arr00[0].end() },
+            { arr00[1].begin(), arr00[1].end() }
+    };
+
+    vector< iter_pair > inputs01 {
+            { arr01[0].begin(), arr01[0].end() },
+            { arr01[1].begin(), arr01[1].end() }
+    };
+    vector< iter_pair > inputs02 {
+            { arr02[0].begin(), arr02[0].end() },
+            { arr02[1].begin(), arr02[1].end() },
+            { arr02[2].begin(), arr02[2].end() }
+    };
+
+    vector< iter_pair > inputs1 {
+            { arr1[0].begin(), arr1[0].end() },
+            { arr1[1].begin(), arr1[1].end() },
+            { arr1[2].begin(), arr1[2].end() }
+    };
+
+    vector< iter_pair > inputs2 {
+            { arr2[0].begin(), arr2[0].end() },
+            { arr2[1].begin(), arr2[1].end() }
+    };
+
+    vector< iter_pair > inputs3 {
+        { arr3[0].begin(),  arr3[0].end() },
+        { arr3[1].begin(),  arr3[1].end() },
+        { arr3[2].begin(),  arr3[2].end() },
+        { arr3[3].begin(),  arr3[3].end() },
+        { arr3[4].begin(),  arr3[4].end() },
+        { arr3[5].begin(),  arr3[5].end() },
+        { arr3[6].begin(),  arr3[6].end() },
+        { arr3[7].begin(),  arr3[7].end() },
+        { arr3[8].begin(),  arr3[8].end() },
+        { arr3[9].begin(),  arr3[9].end() },
+        { arr3[10].begin(), arr3[10].end() },
+        { arr3[11].begin(), arr3[11].end() }
+    };
+
+    vector<int> intersection;
+
+    stdx::kway_intersect(inputs00, back_inserter(intersection));
+    REQUIRE(intersection.empty());
+    intersection.clear();
+
+    stdx::kway_intersect(inputs01, back_inserter(intersection));
+    REQUIRE(intersection.empty());
+    intersection.clear();
+
+    stdx::kway_intersect(inputs02, back_inserter(intersection));
+    REQUIRE(intersection == desired);
+    intersection.clear();
+
+    stdx::kway_intersect(inputs1, back_inserter(intersection));
+    REQUIRE(intersection == desired);
+    intersection.clear();
+
+    stdx::kway_intersect(inputs2, back_inserter(intersection));
+    REQUIRE(intersection == desired);
+    intersection.clear();
+
+    stdx::kway_intersect(inputs3, back_inserter(intersection));
+    REQUIRE(intersection == desired);
+    intersection.clear();
+}
 

@@ -36,6 +36,7 @@
 #include "ext/share_element.hpp"
 #include "ext/kway_merge.hpp"
 #include "ext/kway_union.hpp"
+#include "ext/kway_intersect.hpp"
 #include "ext/is_unique.hpp"
 #include "ext/distances.hpp"
 #include "ext/simplify.hpp"
