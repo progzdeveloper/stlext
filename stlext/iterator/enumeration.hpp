@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    value_type __m_ivp;
+    value_type __m_ivp; // index-value pair
 };
 
 
@@ -144,7 +144,7 @@ public:
     }
 
 protected:
-    value_type __m_ivp;
+    value_type __m_ivp; // index-value pair
 };
 
 
@@ -312,18 +312,26 @@ private:
 
 
 template<class _It, class _Index>
-inline enumeration<_It, _Index> enumerate(_It first, _It last, _Index offset = _Index()) {
+inline enumeration<_It, _Index> enumerate(_It first, _It last, _Index offset) {
     return enumeration<_It, _Index>(first, last, offset);
 }
 
-template<class _Container, class _Index>
-inline auto enumerate(_Container& c, _Index offset = _Index()) {
-    return enumeration<decltype(std::begin(c)), _Index>(std::begin(c), std::end(c), offset);
+template<class _It>
+inline enumeration<_It, typename std::iterator_traits<_It>::difference_type>
+    enumerate(_It first, _It last)
+{
+    typedef typename std::iterator_traits<_It>::difference_type diff_type;
+    return enumeration<_It, _Index>(first, last, diff_type(0));
 }
 
-template<class _Container, class _Index>
-inline auto enumerate(const _Container& c, _Index offset = _Index()) {
-    return enumeration<decltype(std::begin(c)), _Index>(std::begin(c), std::end(c), offset);
+template<class _Container>
+inline auto enumerate(const _Container& c) {
+    return enumerate<decltype(std::begin(c))>(std::begin(c), std::end(c));
+}
+
+template<class _Container>
+inline auto enumerate(_Container& c) {
+    return enumerate<decltype(std::begin(c))>(std::begin(c), std::end(c));
 }
 
 _STDX_END
