@@ -61,6 +61,9 @@ public:
     enumerable_iterator(_It first) : __m_ivp(0, first) {}
     enumerable_iterator(_It first, _Index offset) : __m_ivp(offset, first) {}
 
+    inline _It base() const { return __m_ivp.second; }
+    inline _It base() { return __m_ivp.second; }
+
     inline reference operator* () { return this->__m_ivp; }
     inline pointer operator-> () { return &this->__m_ivp; }
 
@@ -87,6 +90,21 @@ public:
         return !((*this) == other);
     }
 
+    friend inline bool operator== (const enumerable_iterator& lhs, const _It& rhs) {
+        return (lhs.__m_ivp.second == rhs);
+    }
+
+    friend inline bool operator== (const _It& lhs, const enumerable_iterator& rhs) {
+        return (lhs == rhs.__m_ivp.second);
+    }
+
+    friend inline bool operator!= (const enumerable_iterator& lhs, const _It& rhs) {
+        return (lhs.__m_ivp.second != rhs);
+    }
+
+    friend inline bool operator!= (const _It& lhs, const enumerable_iterator& rhs) {
+        return (lhs != rhs.__m_ivp.second);
+    }
 private:
     value_type __m_ivp; // index-value pair
 };
@@ -117,6 +135,9 @@ public:
     enumerable_iterator(_It first) : __m_ivp(0, first) {}
     enumerable_iterator(_It first, _Index offset) : __m_ivp(offset, first) {}
 
+    inline _It base() const { return __m_ivp.second; }
+    inline _It base() { return __m_ivp.second; }
+
     inline reference operator* () { return this->__m_ivp; }
     inline pointer operator-> () { return &this->__m_ivp; }
 
@@ -135,15 +156,30 @@ public:
         return tmp;
     }
 
-    inline bool operator== (const enumerable_iterator& other) {
-        return this->__m_ivp.second == other.__m_ivp.second;
+    friend inline bool operator== (const enumerable_iterator& lhs, const enumerable_iterator& rhs) {
+        return (lhs.__m_ivp.second == rhs.__m_ivp.second);
     }
 
-    inline bool operator!= (const enumerable_iterator& other) {
-        return !((*this) == other);
+    friend inline bool operator!= (const enumerable_iterator& lhs, const enumerable_iterator& rhs) {
+        return (lhs.__m_ivp.second != rhs.__m_ivp.second);
     }
 
-protected:
+    friend inline bool operator== (const enumerable_iterator& lhs, const _It& rhs) {
+        return (lhs.__m_ivp.second == rhs);
+    }
+
+    friend inline bool operator== (const _It& lhs, const enumerable_iterator& rhs) {
+        return (lhs == rhs.__m_ivp.second);
+    }
+
+    friend inline bool operator!= (const enumerable_iterator& lhs, const _It& rhs) {
+        return (lhs.__m_ivp.second != rhs);
+    }
+
+    friend inline bool operator!= (const _It& lhs, const enumerable_iterator& rhs) {
+        return (lhs != rhs.__m_ivp.second);
+    }
+//protected:
     value_type __m_ivp; // index-value pair
 };
 
@@ -287,6 +323,28 @@ inline enumerable_iterator<_It, _Index, std::random_access_iterator_tag>
 
 
 
+
+template<
+    class _It,
+    class _Index
+>
+inline enumerable_iterator<_It, _Index>
+    make_enumerable_iterator(_It first, _Index offset)
+{
+    return enumerable_iterator<_It, _Index>(first, offset);
+}
+
+template<class _It>
+inline enumerable_iterator<_It, typename std::iterator_traits<_It>::difference_type>
+    make_enumerable_iterator(_It first)
+{
+    typedef typename std::iterator_traits<_It>::difference_type index_type;
+    return enumerable_iterator<_It, index_type>(first, index_type(0));
+}
+
+
+
+
 template<
     class _It,
     class _Index
@@ -299,6 +357,9 @@ public:
 
     enumeration(_It first, _It last, _Index offset) :
         __m_first(first, offset), __m_last(last, offset) {}
+
+    enumeration(iterator first, iterator last) :
+        __m_first(first), __m_last(last) {}
 
     inline iterator begin() { return __m_first; }
     inline iterator end() { return __m_last; }
@@ -321,7 +382,7 @@ inline enumeration<_It, typename std::iterator_traits<_It>::difference_type>
     enumerate(_It first, _It last)
 {
     typedef typename std::iterator_traits<_It>::difference_type diff_type;
-    return enumeration<_It, _Index>(first, last, diff_type(0));
+    return enumeration<_It, diff_type>(first, last, diff_type(0));
 }
 
 template<class _Container>
