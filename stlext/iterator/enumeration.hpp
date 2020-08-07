@@ -179,7 +179,7 @@ public:
     friend inline bool operator!= (const _It& lhs, const enumerable_iterator& rhs) {
         return (lhs != rhs.__m_ivp.second);
     }
-//protected:
+protected:
     value_type __m_ivp; // index-value pair
 };
 
