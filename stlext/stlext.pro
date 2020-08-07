@@ -174,7 +174,13 @@ HEADERS += \
     algorithm/ext/kway_merge.hpp \
     algorithm/ext/kway_union.hpp \
     algorithm/ext/kway_utility.hpp \
-    functional/symmetric_operation.hpp
+    functional/symmetric_operation.hpp \
+    algorithm/ext/kway_intersect.hpp \
+    containers/ordered_stack.hpp \
+    iterator/variant_iterator.hpp \
+    iterator/zigzag_iterator.hpp \
+    algorithm/ext/adjacent_pairs.hpp \
+    algorithm/ext/indexed_remove.hpp
 
 SOURCES +=
 

@@ -40,6 +40,7 @@ _STDX_BEGIN
 
 /// INPUT-OUTPUT ITERATOR
 
+
 template<
     class _It,
     class _Index = size_t,
@@ -52,7 +53,19 @@ public:
     typedef typename traits_type::difference_type difference_type;
 
     typedef _Category iterator_category;
-    typedef std::pair<_Index, _It> value_type;
+
+
+    //typedef std::pair<_Index, _It> value_type;
+    struct entry : public std::pair<_Index, _It>
+    {
+        typedef std::pair<_Index, _It> base_type;
+        entry(_Index offset, _It it) : base_type(offset, it) {}
+        operator typename traits_type::value_type () const {
+            return *this->second;
+        }
+    };
+    typedef entry value_type;
+
     typedef value_type& reference;
     typedef value_type* pointer;
     typedef const value_type& const_reference;
@@ -119,12 +132,24 @@ template<
 >
 class enumerable_iterator<_It, _Index, std::forward_iterator_tag>
 {
+    template<class, class, class>
+    friend class enumerable_iterator;
 public:
     typedef std::iterator_traits<_It> traits_type;
     typedef typename traits_type::difference_type difference_type;
 
     typedef std::forward_iterator_tag iterator_category;
-    typedef std::pair<_Index, _It> value_type;
+
+    //typedef std::pair<_Index, _It> value_type;
+    struct entry : public std::pair<_Index, _It>
+    {
+        typedef std::pair<_Index, _It> base_type;
+        entry(_Index offset, _It it) : base_type(offset, it) {}
+        operator typename traits_type::value_type () const {
+            return *this->second;
+        }
+    };
+    typedef entry value_type;
 
     typedef value_type& reference;
     typedef value_type* pointer;
@@ -266,18 +291,14 @@ public:
         this->__m_ivp.first -= d;
         this->__m_ivp.second -= d;
     }
+
+
+    friend inline difference_type operator- (enumerable_iterator& lhs, enumerable_iterator& rhs) {
+        return (lhs.__m_ivp.second - rhs.__m_ivp.second);
+    }
 };
 
-template<
-    class _It,
-    class _Index
->
-inline typename enumerable_iterator<_It, _Index, std::random_access_iterator_tag>::difference_type
-    operator- (enumerable_iterator<_It, _Index, std::random_access_iterator_tag>& lhs,
-               enumerable_iterator<_It, _Index, std::random_access_iterator_tag>& rhs)
-{
-    return (lhs.__m_ivp.second - rhs.__m_ivp.second);
-}
+
 
 template<
     class _It,
@@ -320,10 +341,6 @@ inline enumerable_iterator<_It, _Index, std::random_access_iterator_tag>
 }
 
 
-
-
-
-
 template<
     class _It,
     class _Index
@@ -341,7 +358,6 @@ inline enumerable_iterator<_It, typename std::iterator_traits<_It>::difference_t
     typedef typename std::iterator_traits<_It>::difference_type index_type;
     return enumerable_iterator<_It, index_type>(first, index_type(0));
 }
-
 
 
 
@@ -387,12 +403,12 @@ inline enumeration<_It, typename std::iterator_traits<_It>::difference_type>
 
 template<class _Container>
 inline auto enumerate(const _Container& c) {
-    return enumerate<decltype(std::begin(c))>(std::begin(c), std::end(c));
+    return enumerate(std::begin(c), std::end(c));
 }
 
 template<class _Container>
 inline auto enumerate(_Container& c) {
-    return enumerate<decltype(std::begin(c))>(std::begin(c), std::end(c));
+    return enumerate(std::begin(c), std::end(c));
 }
 
 _STDX_END
