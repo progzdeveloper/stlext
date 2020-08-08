@@ -435,30 +435,42 @@ private:
     T __m_val, __m_step;
 };
 
+
+
 template<class T>
 class numeric_sequence
 {
 public:
+    typedef T value_type;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T* pointer;
+    typedef const T* const_pointer;
     typedef std::ptrdiff_t difference_type;
 
     typedef numeric_iterator<T, 1> iterator;
+    typedef numeric_iterator<T, 1> const_iterator;
 
     /** @brief Constructor.
      *  @param __val Element of the sequence.
      *  @param __count Number of (virtual) copies.
      */
     numeric_sequence(const T& __val, difference_type __count)
-        : _M_val(__val), _M_count(__count)  { }
+        : __m_val(__val), __m_count(__count)  { }
 
     /** @brief Begin iterator. */
-    iterator begin() const { return iterator(_M_val, 0); }
+    iterator begin() const { return iterator(__m_val, 0); }
 
     /** @brief End iterator. */
-    iterator end() const { return iterator(_M_val, _M_count); }
+    iterator end() const { return iterator(__m_val, __m_count); }
+
+    const_reference operator[](size_t i) const {
+        return *(this->begin() + i);
+    }
 
 private:
-    const T& _M_val;
-    difference_type _M_count;
+    const T& __m_val;
+    difference_type __m_count;
 };
 
 _STDX_END
