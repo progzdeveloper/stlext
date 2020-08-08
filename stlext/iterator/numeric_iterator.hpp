@@ -36,138 +36,138 @@ _STDX_BEGIN
 
 
 template<
-	class T,
-	ptrdiff_t _Stride = 0
+    class T,
+    std::ptrdiff_t _Stride = 0
 >
 class numeric_iterator
 {
 
 public:
-	typedef T value_type;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T*const pointer;
-	typedef const T* const const_pointer;
+    typedef T value_type;
+    typedef T& reference;
+    typedef const T&   const_reference;
+    typedef T* pointer;
+    typedef const T* const_pointer;
 
-	typedef std::ptrdiff_t difference_type;
-	typedef std::ptrdiff_t distance_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef std::ptrdiff_t distance_type;
 
-	typedef std::random_access_iterator_tag iterator_category;
+    typedef std::random_access_iterator_tag iterator_category;
 
 
-	numeric_iterator(const T& x) :
-		__m_val(x) {
-	}
+    numeric_iterator(const T& x) :
+        __m_val(x) {
+    }
 
-	numeric_iterator(const numeric_iterator& other) :
-		__m_val(other.__m_val) {
-	}
+    numeric_iterator(const numeric_iterator& other) :
+        __m_val(other.__m_val) {
+    }
 
-	numeric_iterator(numeric_iterator&& other) :
-		__m_val(std::move(other.__m_val)) {
-	}
+    numeric_iterator(numeric_iterator&& other) :
+        __m_val(std::move(other.__m_val)) {
+    }
 
-	numeric_iterator& operator= (const numeric_iterator& other) {
-		__m_val = other.__m_val;
-		return (*this);
-	}
+    numeric_iterator& operator= (const numeric_iterator& other) {
+        __m_val = other.__m_val;
+        return (*this);
+    }
 
-	numeric_iterator& operator= (numeric_iterator&& other) {
-		__m_val = std::move(other.__m_val);
-		return (*this);
-	}
+    numeric_iterator& operator= (numeric_iterator&& other) {
+        __m_val = std::move(other.__m_val);
+        return (*this);
+    }
 
-	inline const_reference operator*() const { return __m_val; }
+    inline const_reference operator*() const { return __m_val; }
 
-    inline pointer operator->() { return (&__m_val); }
+    inline const_pointer operator->() const { return (&__m_val); }
 
-	inline const_reference operator[] (difference_type offset) const {
-		return (__m_val + offset * _Stride);
-	}
+    inline const_reference operator[] (difference_type offset) const {
+        return (__m_val + offset * _Stride);
+    }
 
-	inline numeric_iterator& operator+= (difference_type offset) {
-		__m_val += (offset * _Stride);
-		return (*this);
-	}
+    inline numeric_iterator& operator+= (difference_type offset) {
+        __m_val += (offset * _Stride);
+        return (*this);
+    }
 
-	inline numeric_iterator& operator++() {
-		__m_val += _Stride;
-		return (*this);
-	}
+    inline numeric_iterator& operator++() {
+        __m_val += _Stride;
+        return (*this);
+    }
 
-	inline numeric_iterator operator++(int) {
-		numeric_iterator t(*this);
-		__m_val += _Stride;
-		return t;
-	}
-
-	inline numeric_iterator operator+ (difference_type offset) const {
+    inline numeric_iterator operator++(int) {
         numeric_iterator t(*this);
-		return (t += offset);
-	}
+        __m_val += _Stride;
+        return t;
+    }
+
+    inline numeric_iterator operator+ (difference_type offset) const {
+        numeric_iterator t(*this);
+        return (t += offset);
+    }
 
 
-	inline numeric_iterator& operator-= (difference_type offset) {
-		__m_val -= (offset * _Stride);
-		return (*this);
-	}
+    inline numeric_iterator& operator-= (difference_type offset) {
+        __m_val -= (offset * _Stride);
+        return (*this);
+    }
 
-	inline numeric_iterator& operator--() {
-		__m_val -= _Stride;
-		return (*this);
-	}
+    inline numeric_iterator& operator--() {
+        __m_val -= _Stride;
+        return (*this);
+    }
 
-	inline numeric_iterator operator--(int) {
-		numeric_iterator t(*this);
-		__m_val -= _Stride;
-		return t;
-	}
-
-
-	inline numeric_iterator operator- (difference_type offset) const {
-		numeric_iterator t(*this);
-		t -= offset;
-		return t;
-	}
-
-	inline T operator- (const numeric_iterator& other) const {
-		return ((__m_val - other.__m_val) / _Stride);
-	}
+    inline numeric_iterator operator--(int) {
+        numeric_iterator t(*this);
+        __m_val -= _Stride;
+        return t;
+    }
 
 
+    inline numeric_iterator operator- (difference_type offset) const {
+        numeric_iterator t(*this);
+        t -= offset;
+        return t;
+    }
 
-	friend bool operator== (const numeric_iterator& lhs,
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val == rhs.__m_val);
-	}
+    inline T operator- (const numeric_iterator& other) const {
+        return ((__m_val - other.__m_val) / _Stride);
+    }
 
-	friend bool operator!= (const numeric_iterator& lhs,
-							const numeric_iterator& rhs) {
-		return !(lhs == rhs);
-	}
 
-	friend bool operator< (const numeric_iterator& lhs,
-						   const numeric_iterator& rhs) {
-		return (lhs.__m_val < rhs.__m_val);
-	}
 
-	friend bool operator<= (const numeric_iterator& lhs,
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val <= rhs.__m_val);
-	}
+    friend bool operator== (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val == rhs.__m_val);
+    }
 
-	friend bool operator> (const numeric_iterator& lhs,
-						   const numeric_iterator& rhs) {
-		return (lhs.__m_val > rhs.__m_val);
-	}
+    friend bool operator!= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return !(lhs == rhs);
+    }
 
-	friend bool operator>= (const numeric_iterator& lhs,
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val >= rhs.__m_val);
-	}
+    friend bool operator< (const numeric_iterator& lhs,
+                           const numeric_iterator& rhs) {
+        return (lhs.__m_val < rhs.__m_val);
+    }
+
+    friend bool operator<= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val <= rhs.__m_val);
+    }
+
+    friend bool operator> (const numeric_iterator& lhs,
+                           const numeric_iterator& rhs) {
+        return (lhs.__m_val > rhs.__m_val);
+    }
+
+    friend bool operator>= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val >= rhs.__m_val);
+    }
 
 private:
-	T __m_val;
+    T __m_val;
 };
 
 
@@ -175,119 +175,122 @@ template<class T>
 class numeric_iterator<T, 1>
 {
 public:
-	typedef T value_type;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T*const pointer;
-	typedef const T* const const_pointer;
+    typedef T value_type;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T* pointer;
+    typedef const T*  const_pointer;
 
-	typedef std::ptrdiff_t difference_type;
-	typedef std::ptrdiff_t distance_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef std::ptrdiff_t distance_type;
 
-	typedef std::random_access_iterator_tag iterator_category;
-
-
-	numeric_iterator(const T& x) :
-		__m_val(x) {
-	}
-
-	numeric_iterator(const numeric_iterator& other) :
-		__m_val(other.__m_val) {
-	}
-
-	numeric_iterator(numeric_iterator&& other) :
-		__m_val(std::move(other.__m_val)) {
-	}
-
-	numeric_iterator& operator= (const numeric_iterator& other) {
-		__m_val = other.__m_val;
-		return (*this);
-	}
-
-	numeric_iterator& operator= (numeric_iterator&& other) {
-		__m_val = std::move(other.__m_val);
-		return (*this);
-	}
-
-	inline const_reference operator*() const { return __m_val; }
-
-    inline pointer operator->() const { return (&__m_val); }
+    typedef std::random_access_iterator_tag iterator_category;
 
 
-	inline numeric_iterator operator+ (difference_type offset) const {
-		numeric_iterator t(*this);
-		t += offset;
-		return t;
-	}
+    numeric_iterator(const T& x) :
+        __m_val(x) {
+    }
 
-	inline numeric_iterator& operator+=(difference_type n) {
-		__m_val += n;
-		return (*this);
-	}
+    numeric_iterator(const numeric_iterator& other) :
+        __m_val(other.__m_val) {
+    }
 
-	inline numeric_iterator& operator++() {
-		++__m_val;
-		return (*this);
-	}
+    numeric_iterator(numeric_iterator&& other) :
+        __m_val(std::move(other.__m_val)) {
+    }
 
-	inline numeric_iterator operator++(int) {
-		numeric_iterator t(*this);
-		++__m_val;
-		return t;
-	}
+    numeric_iterator& operator= (const numeric_iterator& other) {
+        __m_val = other.__m_val;
+        return (*this);
+    }
 
-	inline numeric_iterator& operator-=(difference_type n) {
-		__m_val -= n;
-		return (*this);
-	}
+    numeric_iterator& operator= (numeric_iterator&& other) {
+        __m_val = std::move(other.__m_val);
+        return (*this);
+    }
 
-	inline numeric_iterator& operator--() {
-		--__m_val;
-		return (*this);
-	}
+    inline const_reference operator*() const { return __m_val; }
 
-	inline numeric_iterator operator--(int) {
-		numeric_iterator t(*this);
-		--__m_val;
-		return t;
-	}
+    inline const_pointer operator->() const { return (&__m_val); }
 
-	inline numeric_iterator operator- (difference_type offset) const {
-		numeric_iterator t(*this);
-		t -= offset;
-		return t;
-	}
+    inline const_reference operator[] (difference_type offset) const {
+        return (__m_val + offset);
+    }
 
-	inline T operator- (const numeric_iterator& other) const {
-		return (__m_val - other.__m_val);
-	}
+    inline numeric_iterator operator+ (difference_type offset) const {
+        numeric_iterator t(*this);
+        t += offset;
+        return t;
+    }
 
-	friend bool operator== (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return (lhs.__m_val == rhs.__m_val);
-	}
+    inline numeric_iterator& operator+=(difference_type n) {
+        __m_val += n;
+        return (*this);
+    }
 
-	friend bool operator!= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return !(lhs == rhs);
-	}
+    inline numeric_iterator& operator++() {
+        ++__m_val;
+        return (*this);
+    }
 
-	friend bool operator< (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return (lhs.__m_val < rhs.__m_val);
-	}
+    inline numeric_iterator operator++(int) {
+        numeric_iterator t(*this);
+        ++__m_val;
+        return t;
+    }
 
-	friend bool operator<= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return (lhs.__m_val <= rhs.__m_val);
-	}
+    inline numeric_iterator& operator-=(difference_type n) {
+        __m_val -= n;
+        return (*this);
+    }
 
-	friend bool operator> (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return (lhs.__m_val > rhs.__m_val);
-	}
+    inline numeric_iterator& operator--() {
+        --__m_val;
+        return (*this);
+    }
 
-	friend bool operator>= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
-		return (lhs.__m_val >= rhs.__m_val);
-	}
+    inline numeric_iterator operator--(int) {
+        numeric_iterator t(*this);
+        --__m_val;
+        return t;
+    }
+
+    inline numeric_iterator operator- (difference_type offset) const {
+        numeric_iterator t(*this);
+        t -= offset;
+        return t;
+    }
+
+    inline T operator- (const numeric_iterator& other) const {
+        return (__m_val - other.__m_val);
+    }
+
+    friend bool operator== (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return (lhs.__m_val == rhs.__m_val);
+    }
+
+    friend bool operator!= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return !(lhs == rhs);
+    }
+
+    friend bool operator< (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return (lhs.__m_val < rhs.__m_val);
+    }
+
+    friend bool operator<= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return (lhs.__m_val <= rhs.__m_val);
+    }
+
+    friend bool operator> (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return (lhs.__m_val > rhs.__m_val);
+    }
+
+    friend bool operator>= (const numeric_iterator& lhs, const numeric_iterator& rhs) {
+        return (lhs.__m_val >= rhs.__m_val);
+    }
 
 private:
-	T __m_val;
+    T __m_val;
 };
 
 
@@ -295,144 +298,168 @@ private:
 template<class T>
 class numeric_iterator<T, 0>
 {
-	typedef identity_element< std::multiplies<T> > _IdentityElem;
+    typedef identity_element< std::multiplies<T> > _IdentityElem;
 public:
-	typedef T value_type;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T*const pointer;
-	typedef const T* const const_pointer;
+    typedef T value_type;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T* pointer;
+    typedef const T*  const_pointer;
 
-	typedef std::ptrdiff_t difference_type;
-	typedef std::ptrdiff_t distance_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef std::ptrdiff_t distance_type;
 
-	typedef std::random_access_iterator_tag iterator_category;
+    typedef std::random_access_iterator_tag iterator_category;
 
 
-	numeric_iterator(const T& x, const T& step = _IdentityElem::get()) :
-		__m_val(x),
-		__m_step(step) {
-	}
+    numeric_iterator(const T& x, const T& step = _IdentityElem::get()) :
+        __m_val(x),
+        __m_step(step) {
+    }
 
-	numeric_iterator(const numeric_iterator& other) :
-		__m_val(other.__m_val),
-		__m_step(other.__m_step) {
-	}
+    numeric_iterator(const numeric_iterator& other) :
+        __m_val(other.__m_val),
+        __m_step(other.__m_step) {
+    }
 
-	numeric_iterator(numeric_iterator&& other) :
-		__m_val(std::move(other.__m_val)),
-		__m_step(std::move(other.__m_step)) {
-	}
+    numeric_iterator(numeric_iterator&& other) :
+        __m_val(std::move(other.__m_val)),
+        __m_step(std::move(other.__m_step)) {
+    }
 
-	numeric_iterator& operator= (const numeric_iterator& other) {
-		__m_val = other.__m_val;
-		__m_step = other.__m_step;
-		return (*this);
-	}
+    numeric_iterator& operator= (const numeric_iterator& other) {
+        __m_val = other.__m_val;
+        __m_step = other.__m_step;
+        return (*this);
+    }
 
-	numeric_iterator& operator= (numeric_iterator&& other) {
-		__m_val = std::move(other.__m_val);
-		__m_step = std::move(other.__m_step);
-		return (*this);
-	}
+    numeric_iterator& operator= (numeric_iterator&& other) {
+        __m_val = std::move(other.__m_val);
+        __m_step = std::move(other.__m_step);
+        return (*this);
+    }
 
-	inline const_reference operator*() const { return __m_val; }
+    inline const_reference operator*() const { return __m_val; }
 
-    inline pointer operator->() { return (&__m_val); }
+    inline const_pointer operator->() const { return (&__m_val); }
 
-	inline const_reference operator[] (difference_type offset) const {
-		return (__m_val + offset * __m_step);
-	}
+    inline const_reference operator[] (difference_type offset) const {
+        return (__m_val + offset * __m_step);
+    }
 
-	
 
-	inline numeric_iterator& operator+= (difference_type offset) {
-		__m_val += (offset * __m_step);
-		return (*this);
-	}
 
-	inline numeric_iterator& operator++() {
-		__m_val += __m_step;
-		return (*this);
-	}
+    inline numeric_iterator& operator+= (difference_type offset) {
+        __m_val += (offset * __m_step);
+        return (*this);
+    }
 
-	inline numeric_iterator operator++(int) {
-		numeric_iterator t(*this);
-		__m_val += __m_step;
-		return t;
-	}
+    inline numeric_iterator& operator++() {
+        __m_val += __m_step;
+        return (*this);
+    }
 
-	inline numeric_iterator operator+ (difference_type offset) const {
+    inline numeric_iterator operator++(int) {
         numeric_iterator t(*this);
-		return (t += offset);
-	}
+        __m_val += __m_step;
+        return t;
+    }
+
+    inline numeric_iterator operator+ (difference_type offset) const {
+        numeric_iterator t(*this);
+        return (t += offset);
+    }
 
 
-	inline numeric_iterator& operator-= (difference_type offset) {
-		__m_val -= (offset * __m_step);
-		return (*this);
-	}
+    inline numeric_iterator& operator-= (difference_type offset) {
+        __m_val -= (offset * __m_step);
+        return (*this);
+    }
 
-	inline numeric_iterator& operator--() {
-		__m_val -= __m_step;
-		return (*this);
-	}
+    inline numeric_iterator& operator--() {
+        __m_val -= __m_step;
+        return (*this);
+    }
 
-	inline numeric_iterator operator--(int) {
-		numeric_iterator t(*this);
-		__m_val -= __m_step;
-		return t;
-	}
+    inline numeric_iterator operator--(int) {
+        numeric_iterator t(*this);
+        __m_val -= __m_step;
+        return t;
+    }
 
 
-	inline numeric_iterator operator- (difference_type offset) const {
-		numeric_iterator t(*this);
-		t -= offset;
-		return t;
-	}
+    inline numeric_iterator operator- (difference_type offset) const {
+        numeric_iterator t(*this);
+        t -= offset;
+        return t;
+    }
 
-	inline T operator- (const numeric_iterator& other) const {
+    inline T operator- (const numeric_iterator& other) const {
         __stdx_assertx(__m_val == other.__m_val, std::logic_error, "iterators stride not equal");
-		return ((__m_val - other.__m_val) / __m_step);
-	}
+        return ((__m_val - other.__m_val) / __m_step);
+    }
 
 
 
-	friend bool operator== (const numeric_iterator& lhs, 
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val == rhs.__m_val);
-	}
+    friend bool operator== (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val == rhs.__m_val);
+    }
 
-	friend bool operator!= (const numeric_iterator& lhs, 
-							const numeric_iterator& rhs) {
-		return !(lhs == rhs);
-	}
+    friend bool operator!= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return !(lhs == rhs);
+    }
 
-	friend bool operator< (const numeric_iterator& lhs, 
-						   const numeric_iterator& rhs) {
-		return (lhs.__m_val < rhs.__m_val);
-	}
+    friend bool operator< (const numeric_iterator& lhs,
+                           const numeric_iterator& rhs) {
+        return (lhs.__m_val < rhs.__m_val);
+    }
 
-	friend bool operator<= (const numeric_iterator& lhs, 
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val <= rhs.__m_val);
-	}
+    friend bool operator<= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val <= rhs.__m_val);
+    }
 
-	friend bool operator> (const numeric_iterator& lhs, 
-						   const numeric_iterator& rhs) {
-		return (lhs.__m_val > rhs.__m_val);
-	}
+    friend bool operator> (const numeric_iterator& lhs,
+                           const numeric_iterator& rhs) {
+        return (lhs.__m_val > rhs.__m_val);
+    }
 
-	friend bool operator>= (const numeric_iterator& lhs,
-							const numeric_iterator& rhs) {
-		return (lhs.__m_val >= rhs.__m_val);
-	}
+    friend bool operator>= (const numeric_iterator& lhs,
+                            const numeric_iterator& rhs) {
+        return (lhs.__m_val >= rhs.__m_val);
+    }
 
 private:
-	T __m_val, __m_step;
+    T __m_val, __m_step;
 };
 
+template<class T>
+class numeric_sequence
+{
+public:
+    typedef std::ptrdiff_t difference_type;
 
+    typedef numeric_iterator<T, 1> iterator;
+
+    /** @brief Constructor.
+     *  @param __val Element of the sequence.
+     *  @param __count Number of (virtual) copies.
+     */
+    numeric_sequence(const T& __val, difference_type __count)
+        : _M_val(__val), _M_count(__count)  { }
+
+    /** @brief Begin iterator. */
+    iterator begin() const { return iterator(_M_val, 0); }
+
+    /** @brief End iterator. */
+    iterator end() const { return iterator(_M_val, _M_count); }
+
+private:
+    const T& _M_val;
+    difference_type _M_count;
+};
 
 _STDX_END
 
