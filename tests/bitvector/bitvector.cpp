@@ -12,14 +12,14 @@ namespace detail
         return bits;
 	}
 
-	template<class _Word, bool C>
+    template<class _Word, bool C>
 	std::string to_string(stdx::bit_iterator<_Word, C> first, stdx::bit_iterator<_Word, C> last) {
 		std::stringstream oss;
 		std::copy(std::make_reverse_iterator(last),
 				  std::make_reverse_iterator(first),
 				  std::ostream_iterator<bool>(oss));
 		return oss.str();
-	}
+    }
 }
 
 TEST_CASE("bitvector/constructor", "[bitvector]")
@@ -1280,9 +1280,136 @@ void __test_bit_transform_111(size_t length)
 }
 
 
+TEST_CASE("bitvector/transform", "[bitvector]")
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    string rep;
+
+    /// bit transformation
+
+    bitset<192> bx("111111100001010000000000000000000000000000000000000000000000000011111110000101000000000000000000000000000000000000000000000000001111111000010100000000000000000000000000000000000000000000000000");
+    bitset<192> by("101010111000000000000000000000000000000000000000000000000010101010101011100000000000000000000000000000000000000000000000001010101010101110000000000000000000000000000000000000000000000000101010");
+    bitset<192> bz("000000011111110000000000000000000000000000000000000000010111111100000001111111000000000000000000000000000000000000000001011111110000000111111100000000000000000000000000000000000000000101111111");
+    bitvec x, y, z;
+    string sx, sy, sz;
+
+    auto __or  = [](const char a, const char b) -> char { return ('0' + ((a - '0') | (b - '0'))); };
+    auto __xor = [](const char a, const char b) -> char { return ('0' + ((a - '0') ^ (b - '0'))); };
+    auto __and = [](const char a, const char b) -> char { return ('0' + ((a - '0') & (b - '0'))); };
+
+    size_t length = 3;
+    for (; length <= 128; ++length)
+    {
+        for (size_t lower = 0; lower < (length - lower - 3); ++lower) {
+            // OR
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower - 3, bit_or<>());
+            rep = to_string(z);
+
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower - 3, __or);
+            REQUIRE(sz == rep);
+
+            // XOR
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower - 3, bit_xor<>());
+            rep = to_string(z);
+
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower - 3, __xor);
+            REQUIRE(sz == rep);
+
+            // AND
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower - 3, bit_and<>());
+            rep = to_string(z);
+
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower - 3, __and);
+            REQUIRE(sz == rep);
 
 
+            // OR
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower + 1, bit_or<>());
+            rep = to_string(z);
 
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower + 1, __or);
+            REQUIRE(sz == rep);
+
+            // XOR
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower + 1, bit_xor<>());
+            rep = to_string(z);
+
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower + 1, __xor);
+            REQUIRE(sz == rep);
+
+            // AND
+            x = bx; y = by; z = bz;
+            stdx::transform(x.begin() + lower, x.begin() + (length + lower), y.begin() + (x.size() - length), z.begin() + lower + 1, bit_and<>());
+            rep = to_string(z);
+
+            sx = bx.to_string(); sy = by.to_string(); sz = bz.to_string();
+            std::transform(sx.rbegin() + lower, sx.rbegin() + (length + lower), sy.rbegin() + (x.size() - length), sz.rbegin() + lower + 1, __and);
+            REQUIRE(sz == rep);
+        }
+
+    }
+}
+
+TEST_CASE("bitvector/bitap_search", "[bitvector]")
+{
+    using namespace std;
+    using ::detail::to_string;
+
+    typedef stdx::bitvector<> bitvec;
+
+    bitset<133> bsource("0010101010000101111011101000100100000101111011101000010011011111101010101010101100100000000000011000000111000101100000101111011101000");
+    bitset<19>  bpattern("0000101111011101000");
+
+    size_t offsets[] = { 0, 81, 105 };
+
+    bitvec source = bsource;
+    bitvec pattern = bpattern;
+
+    { // check entry algorithm
+        std::allocator< std::bitset<512> > al;
+        auto pos = stdx::detail::__bitap_bitsearch(al, source.begin(), source.end(),
+                                                       pattern.begin(), pattern.end(), 0);
+
+        size_t i = 0;
+        for(; pos != source.end(); ++i) {
+            size_t offset = pos - source.begin();
+            REQUIRE(i < sizeof(offsets)/sizeof(offsets[0]));
+            REQUIRE(offset == offsets[i]);
+            pos = stdx::detail::__bitap_bitsearch(al, ++pos, source.end(),
+                                                      pattern.begin(), pattern.end(), 0);
+        }
+        REQUIRE(i == sizeof(offsets)/sizeof(offsets[0]));
+    }
+
+    { // check searcher
+        stdx::detail::bitap_searcher< std::bitset<512> > searcher(pattern.begin(), pattern.end(), 0);
+        auto pos = stdx::detail::search(source.begin(), source.end(), searcher);
+
+        size_t i = 0;
+        for(; pos != source.end(); ++i) {
+            size_t offset = pos - source.begin();
+            REQUIRE(i < sizeof(offsets)/sizeof(offsets[0]));
+            REQUIRE(offset == offsets[i]);
+            pos = stdx::detail::search(++pos, source.end(), searcher);
+        }
+        REQUIRE(i == sizeof(offsets)/sizeof(offsets[0]));
+    }
+
+}
 
 TEST_CASE("bitvector/operators", "[bitvector]")
 {

@@ -1184,10 +1184,10 @@ __transform_unaligned(bit_iterator<_Word, _IsConst> __first1,
                 *__result.__m_blk = __w;
                 ++__result.__m_blk;
             } else { // result span adjacent words
-                *__result.__m_blk = (__w << lsbr) | (z & ~__maskr_lo);
-                ++__result.__m_blk;
-                z = *__result.__m_blk;
-                *__result.__m_blk = (__w >> (bpw - lsbr)) | (z & ~((~(_Word(0))) >> (bpw - lsbr)));
+               *__result.__m_blk = (__w << lsbr) | (z & ~__maskr_lo);
+               ++__result.__m_blk;
+               z = *__result.__m_blk;
+               *__result.__m_blk = (__w >> (bpw - lsbr)) | (z & __maskr_lo);
             }
         }
 
@@ -1214,18 +1214,27 @@ __transform_unaligned(bit_iterator<_Word, _IsConst> __first1,
             }
 
             __w = op(x, y); // result is in lower bits of __w
-            __w &= (~(_Word(0))) >> (bpw - __n);
+            //__w &= (~(_Word(0))) >> (bpw - __n);
 
             if ((__n + lsbr) < bpw) { // result located in single word
+                __w &= (~(_Word(0))) >> (bpw - __n);
                 *__result.__m_blk = (__w << lsbr) | (z & (__maskr_lo ^ __maskr_hi));
             } else { // result span adjacent words
-                *__result.__m_blk = (__w << lsbr) | (z & ~__maskr_lo);
-                ++__result.__m_blk;
-                if (msbr != 0)
-                    z = (z & ~__maskr_hi);
-                else
-                    z &= __maskr_hi;
-                *__result.__m_blk = (__w >> (bpw - lsbr)) | z;
+                *__result.__m_blk = (__w << msbr) | (z & ~__maskr_lo);
+                //__w &= (~(_Word(0))) >> (bpw - __n);
+                //++__result.__m_blk;
+                //z = *__result.__m_blk;
+                //if (msbr != 0)
+                //    z &= ~__maskr_hi;
+                //else
+                //    z &= __maskr_hi;
+                //*__result.__m_blk = (__w >> (bpw - lsbr)) | z;
+
+                //__w &= (~(_Word(0))) >> (bpw - __n);
+                //*__result.__m_blk = (__w >> (bpw - __n)) | (z & __maskr_hi);
+
+                //*__result.__m_blk = (__w << (bpw - __n)) | (z & (~__maskr_lo));
+
             }
         }
 
@@ -1649,7 +1658,233 @@ void __reverse_inplace(bit_iterator<_Word, _IsConst> first,
 
 
 
+///
+/// fuzzy bitap bit-search
+///
 
+
+template< class _Uint, class _Allocator = std::allocator<_Uint> >
+class bitap_searcher : public _Allocator
+{
+    static const _Uint _Zero;  // ...00000
+    static const _Uint _One;   // ...00001
+    static const _Uint _Smask; // ...11110 single lowest-bit mask
+    static const _Uint _Xmask; // ...11111 full-word bit mask
+public:
+
+    template<class _Word, bool _IsConst>
+    bitap_searcher(bit_iterator<_Word, _IsConst> __pfirst,
+                   bit_iterator<_Word, _IsConst> __plast,
+                   size_t k = 0) :
+        mv(1), R(nullptr), skewness(k), nbits(0)
+    {
+        if (__pfirst == __plast)
+            return;
+
+        nbits = __plast - __pfirst;
+        if ( nbits > sizeof(_Word) * CHAR_BIT )
+            return;
+
+        /* Adjust skewness */
+        skewness = (std::min)(nbits, skewness);
+
+        /* Initialize result mask */
+        mv <<= nbits;
+
+        /* Initialize the bit array R */
+        R = this->allocate(skewness+1);
+        try {
+            for (size_t i = 0; i <= skewness; ++i)
+                this->construct(R + i, _Smask); // R[i] = ~_Uint(1);
+        }
+        catch(...) {
+            /* Release all resources in case of exception */
+            __release();
+            /* Rethrow exception */
+            throw;
+        }
+
+        /* Initialize the pattern bitmasks */
+        masks[0] = _Xmask;
+        masks[1] = _Xmask;
+        for (size_t i = 0; i < nbits; ++i, ++__pfirst)
+            masks[__pfirst.getbit()] &= ~(_One << i);
+    }
+
+    ~bitap_searcher() {
+        if (R != nullptr) {
+            __release();
+        }
+    }
+
+    template<class _Word, bool _IsConst>
+    std::pair< bit_iterator<_Word, _IsConst>, bit_iterator<_Word, _IsConst> >
+        operator()(bit_iterator<_Word, _IsConst> __sfirst,
+                   bit_iterator<_Word, _IsConst> __slast) const
+    {
+        typedef std::pair<
+                bit_iterator<_Word, _IsConst>,
+                bit_iterator<_Word, _IsConst>
+        > iter_pair;
+
+        iter_pair result(__slast, __slast);
+        if (__sfirst == __slast || R == nullptr)
+            return result;
+
+        std::fill_n(R, (skewness + 1), _Smask);
+
+        _Uint m;
+        _Uint old_Rd1;
+        _Uint tmp;
+        for (; __sfirst != __slast; ++__sfirst)
+        {
+            /* Update the bit arrays */
+            old_Rd1 = R[0];
+            m = masks[__sfirst.getbit()];
+            R[0] |= m;
+            R[0] <<= 1;
+
+            for (size_t d = 1; d <= skewness; ++d) {
+                tmp = R[d];
+                /* Substitution only */
+                R[d] |= m;
+                old_Rd1 &= R[d];
+                old_Rd1 <<= 1;
+                R[d] = old_Rd1;
+                old_Rd1 = tmp;
+            }
+
+            if (_Zero == (R[skewness] & mv)) {
+                result.second = __sfirst;
+                __sfirst -= (nbits - 1);
+                result.first = __sfirst;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+private:
+    void __release()
+    {
+        /* Invoke destructors */
+        for (size_t i = 0; i <= skewness; ++i)
+            this->destroy(R + i);
+        /* Deallocate memory */
+        this->deallocate(R, skewness + 1);
+        R = nullptr;
+    }
+
+private:
+    _Uint masks[2];
+    _Uint mv;
+    _Uint *R;
+    size_t skewness;
+    size_t nbits;
+};
+
+template<class _Uint, class _Allocator>
+const _Uint bitap_searcher<_Uint, _Allocator>::_Zero(0);
+
+template<class _Uint, class _Allocator>
+const _Uint bitap_searcher<_Uint, _Allocator>::_One(1);
+
+template<class _Uint, class _Allocator>
+const _Uint bitap_searcher<_Uint, _Allocator>::_Smask = ~(_Uint(1));
+
+template<class _Uint, class _Allocator>
+const _Uint bitap_searcher<_Uint, _Allocator>::_Xmask = ~(_Uint(0));
+
+
+
+
+template<class _Word, bool _IsConst, class _Searcher>
+bit_iterator<_Word, _IsConst> search( bit_iterator<_Word, _IsConst> __first,
+                                      bit_iterator<_Word, _IsConst> __last,
+                                      const _Searcher& searcher)
+{
+    if (__first == __last)
+        return __last;
+    auto range = searcher(__first, __last);
+    return (range.first == __last && range.second == __last) ? __last : range.first;
+}
+
+
+
+
+
+
+template<class _Allocator, class _Word, bool _IsConst>
+bit_iterator<_Word, _IsConst> __bitap_bitsearch(_Allocator& al,
+                                                bit_iterator<_Word, _IsConst> __sfirst,
+                                                bit_iterator<_Word, _IsConst> __slast,
+                                                bit_iterator<_Word, _IsConst> __pfirst,
+                                                bit_iterator<_Word, _IsConst> __plast,
+                                                size_t skewness)
+{
+    typedef typename _Allocator::value_type _Uint;
+
+    if (__sfirst == __slast || __pfirst == __plast) {
+        return __slast;
+    }
+
+    size_t nbits = __plast - __pfirst;
+    if ( nbits > sizeof(_Word) * CHAR_BIT ) {
+        return __slast;
+    }
+
+    /* Initialize the bit array R */
+    _Uint *R = al.allocate(skewness+1);
+    try {
+        for (size_t i = 0; i <= skewness; ++i) {
+            _Uint* r = R + i;
+            al.construct(r, 1); // R[i] = ~_Uint(1);
+            *r = ~(*r);
+        }
+    }
+    catch(...) {
+        for (size_t i = 0; i <= skewness; ++i)
+            (R + i)->~_Uint();
+        throw;
+    }
+
+    /* Initialize the pattern bitmasks */
+    _Uint masks[2] = { ~_Uint(0), ~_Uint(0) };
+    for (size_t i = 0; i < nbits; ++i, ++__pfirst)
+        masks[__pfirst.getbit()] &= ~(_Uint(1) << i);
+
+    _Uint mv(1);
+    mv <<= nbits;
+
+    bit_iterator<_Word, _IsConst> result = __slast;
+    for (; __sfirst != __slast; ++__sfirst)
+    {
+        /* Update the bit arrays */
+        _Uint old_Rd1 = R[0];
+        _Uint m = masks[__sfirst.getbit()];
+        R[0] |= m;
+        R[0] <<= 1;
+
+        for (size_t d = 1; d <= skewness; ++d) {
+            _Uint tmp = R[d];
+            /* Substitution only */
+            R[d] = (old_Rd1 & (R[d] | m)) << 1;
+            old_Rd1 = tmp;
+        }
+
+        if (_Uint(0) == (R[skewness] & mv)) {
+            result = __sfirst;
+            result -= nbits;
+            result += 1;
+            break;
+        }
+    }
+
+    al.deallocate(R, skewness+1);
+    return result;
+
+}
 
 ///
 /// next permutation

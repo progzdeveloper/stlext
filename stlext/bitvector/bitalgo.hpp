@@ -112,6 +112,10 @@ namespace detail {
     template <class W, bool C, class Comp>
     bool __prev_permutation(bit_iterator<W, C>, bit_iterator<W, C>, Comp);
 
+    template <class _Al, class W, bool C>
+    bit_iterator<W, C> __bitap_bitsearch(_Al&, bit_iterator<W, C>, bit_iterator<W, C>,
+                                               bit_iterator<W, C>, bit_iterator<W, C>, size_t);
+
 
     template <class W, bool C, class _Ch, class _Tr, class _Al>
     std::basic_string<_Ch, _Tr, _Al>& __to_string(bit_iterator<W, C> first,

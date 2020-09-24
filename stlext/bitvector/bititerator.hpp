@@ -253,6 +253,10 @@ public:
     // return bit position
     inline unsigned pos() const { return __m_ctz; }
 
+    inline bool getbit() const {
+        return ((*__m_blk & (_Word(1) << __m_ctz)) != 0);
+    }
+
     inline bit_iterator& operator++()
     {
         if (__m_ctz != bpw - 1)
