@@ -1663,21 +1663,58 @@ void __reverse_inplace(bit_iterator<_Word, _IsConst> first,
 ///
 
 
-template< class _Uint, class _Allocator = std::allocator<_Uint> >
-class bitap_searcher : public _Allocator
+template<
+    class _Uint,
+    class _Alloc
+>
+struct _Bitap_searcher_base : public _Alloc
 {
+protected:
     static const _Uint _Zero;  // ...00000
-    static const _Uint _One;   // ...00001
+    static const _Uint _Ident; // ...00001
     static const _Uint _Smask; // ...11110 single lowest-bit mask
     static const _Uint _Xmask; // ...11111 full-word bit mask
-public:
+};
 
+template<class _Uint,class _Alloc>
+const _Uint _Bitap_searcher_base<_Uint, _Alloc>::_Zero(0);
+
+template<class _Uint, class _Alloc>
+const _Uint _Bitap_searcher_base<_Uint, _Alloc>::_Ident(1);
+
+template<class _Uint, class _Alloc>
+const _Uint _Bitap_searcher_base<_Uint, _Alloc>::_Smask(~_Ident);
+
+template<class _Uint, class _Alloc>
+const _Uint _Bitap_searcher_base<_Uint, _Alloc>::_Xmask(~_Zero);
+
+
+
+template<
+    size_t _Bits,
+    class _Uint = std::bitset<_Bits>,
+    class _Alloc = std::allocator<_Uint>
+>
+class _Bitap_searcher :
+        public _Bitap_searcher_base<_Uint, _Alloc>
+{
+    static_assert(_Bits <= sizeof(_Uint)*CHAR_BIT, "bit width overflow");
+
+    typedef _Bitap_searcher_base<_Uint, _Alloc> base_type;
+
+    using base_type::_Zero;
+    using base_type::_Ident;
+    using base_type::_Xmask;
+    using base_type::_Smask;
+
+public:
     template<class _Word, bool _IsConst>
-    bitap_searcher(bit_iterator<_Word, _IsConst> __pfirst,
-                   bit_iterator<_Word, _IsConst> __plast,
-                   size_t k = 0) :
+    _Bitap_searcher(bit_iterator<_Word, _IsConst> __pfirst,
+                    bit_iterator<_Word, _IsConst> __plast,
+                    size_t k = 0) :
         mv(1), R(nullptr), skewness(k), nbits(0)
     {
+
         if (__pfirst == __plast)
             return;
 
@@ -1708,10 +1745,10 @@ public:
         masks[0] = _Xmask;
         masks[1] = _Xmask;
         for (size_t i = 0; i < nbits; ++i, ++__pfirst)
-            masks[__pfirst.getbit()] &= ~(_One << i);
+            masks[__pfirst.getbit()] &= ~(_Ident << i);
     }
 
-    ~bitap_searcher() {
+    ~_Bitap_searcher() {
         if (R != nullptr) {
             __release();
         }
@@ -1784,19 +1821,33 @@ private:
     size_t nbits;
 };
 
-template<class _Uint, class _Allocator>
-const _Uint bitap_searcher<_Uint, _Allocator>::_Zero(0);
-
-template<class _Uint, class _Allocator>
-const _Uint bitap_searcher<_Uint, _Allocator>::_One(1);
-
-template<class _Uint, class _Allocator>
-const _Uint bitap_searcher<_Uint, _Allocator>::_Smask = ~(_Uint(1));
-
-template<class _Uint, class _Allocator>
-const _Uint bitap_searcher<_Uint, _Allocator>::_Xmask = ~(_Uint(0));
 
 
+
+/*template<class _Word, class _Alloc>
+class _Bitap_searcher<0, stdx::bitvector<_Word>, _Alloc> :
+        public _Bitap_searcher_base<stdx::bitvector<_Word>, _Alloc>
+{
+    typedef stdx::bitvector<_Word> _Bvec_t;
+
+    typedef _Bitap_searcher_base<_Bvec_t, _Alloc> base_type;
+
+    using base_type::_Zero;
+    using base_type::_Ident;
+    using base_type::_Xmask;
+    using base_type::_Smask;
+public:
+
+
+
+private:
+    _Bvec_t masks[2];
+    _Bvec_t mv;
+    _Bvec_t *R;
+    size_t skewness;
+    size_t nbits;
+};
+*/
 
 
 template<class _Word, bool _IsConst, class _Searcher>
@@ -1814,7 +1865,7 @@ bit_iterator<_Word, _IsConst> search( bit_iterator<_Word, _IsConst> __first,
 
 
 
-
+#if 0
 template<class _Allocator, class _Word, bool _IsConst>
 bit_iterator<_Word, _IsConst> __bitap_bitsearch(_Allocator& al,
                                                 bit_iterator<_Word, _IsConst> __sfirst,
@@ -1883,8 +1934,9 @@ bit_iterator<_Word, _IsConst> __bitap_bitsearch(_Allocator& al,
 
     al.deallocate(R, skewness+1);
     return result;
-
 }
+#endif
+
 
 ///
 /// next permutation
