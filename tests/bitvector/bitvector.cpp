@@ -29,7 +29,7 @@ TEST_CASE("bitvector/constructor", "[bitvector]")
 
 	typedef bitvector<> bitvec;
 	std::bitset<65> _bits("11010101010101010101111111111000000011101000111110011111010101111");
-    /*bitvec bits = _bits;
+    bitvec bits = _bits;
 
     bitvec bits0;
     bitvec bits1(64, 0);
@@ -40,7 +40,7 @@ TEST_CASE("bitvector/constructor", "[bitvector]")
     REQUIRE(_bits.to_string() == to_string(bits3));
     REQUIRE(_bits.to_string() == to_string(bits4));
 	REQUIRE(bits0.empty());
-    REQUIRE(bits1.size() == 64);*/
+    REQUIRE(bits1.size() == 64);
 
     typedef bitvector<uint16_t> bvec16;
     bvec16 zero(121, false);
@@ -48,7 +48,8 @@ TEST_CASE("bitvector/constructor", "[bitvector]")
     bvec16 xmask(~zero);
     bvec16 smask(~ident);
 
-    REQUIRE(zero.nblocks() == 8);
+    REQUIRE((~xmask) == zero);
+    REQUIRE((~smask) == ident);
 }
 
 

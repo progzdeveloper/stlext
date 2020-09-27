@@ -152,26 +152,26 @@ private:
 template<class _Word, class _Alloc>
 class bitstorage<sbo, _Word, _Alloc> : _Alloc
 {
-    static_assert(sizeof(_Word) <= sizeof(uintptr_t), "");
-
+    static_assert(sizeof(_Word)  <= sizeof(uintptr_t), "");
+    static_assert(sizeof(size_t) <= sizeof(uintptr_t), "");
 
     // bits per pointer
-    static const size_t bpp = sizeof(uintptr_t)*CHAR_BIT;
+    static constexpr size_t bpp = sizeof(uintptr_t)*CHAR_BIT;
 
     // maximum number of local bits
-    static const size_t max_local_bits = 2 * bpp - CHAR_BIT;
+    static constexpr size_t max_local_bits = 2 * bpp - CHAR_BIT;
 
     // bit indicated heap allocated storage
-    static const uintptr_t heap_bit = uintptr_t(1) << (bpp - 1);
+    static constexpr uintptr_t heap_bit = uintptr_t(1) << (bpp - 1);
 
     // bit-mask for local control block	(pointer aligned)
-    static const uintptr_t local_mask = (~uintptr_t(0) >> CHAR_BIT);
+    static constexpr uintptr_t local_mask = (~uintptr_t(0) >> CHAR_BIT);
 
     // bit-mask for local control block (word aligned)
-    static const _Word wlocal_mask = (~_Word(0) >> CHAR_BIT);
+    static constexpr _Word wlocal_mask = (~_Word(0) >> CHAR_BIT);
 
     // control block offset in bits
-    static const size_t local_offset = bpp - CHAR_BIT;
+    static constexpr size_t local_offset = bpp - CHAR_BIT;
 
 public:
     typedef _Alloc            allocator_type;
@@ -274,8 +274,7 @@ protected:
 
     void __sanitize_bits()
     {
-        // FIXME: test me carefully!!!
-        // FIXME: fix bugs!!!
+        static constexpr size_t upper_block = (sizeof(buf)/sizeof(_Word)-1);
 
         // get storage type
         unsigned flag = __is_local();
@@ -288,11 +287,11 @@ protected:
         size_t bit = (n % bpw); // bit index
 
         // mask bits higher than bit
-        _Word mask = (bit != 0) ? ((_Word(1) << bit) - 1) : (~_Word(0));
-
-        size_t i = (sizeof(buf)/sizeof(_Word)-1);
-        if (blk == i && flag)
-            mask |= ~wlocal_mask;
+        //_Word mask = (bit != 0) ? ((_Word(1) << bit) - 1) : (~_Word(0));
+        // mask bits higher than bit (branchless)
+        _Word mask = ~((~_Word(0)) << bit) - (bit == 0);
+        // branchless mix with wlocal_mask iff local flag is set and block index is upper_block
+        mask |= ~wlocal_mask * (unsigned(blk == upper_block && flag));
         // mask higest bits of higest word
         wp[blk] &= mask;
     }
@@ -384,12 +383,12 @@ private:
     void __reset(pointer p, size_t nbits)
     {
         if (nbits < max_local_bits) {
-            buf[1] &= local_mask;
-            buf[1] |= (nbits << local_offset);
-            buf[1] &= ~heap_bit;
+            buf[1] &= local_mask; // clear control block
+            buf[1] |= (nbits << local_offset); // put size
+            buf[1] &= ~heap_bit; // unset heap allocation bit
         } else {
-            buf[0] = (uintptr_t)p;
-            buf[1] = (nbits | heap_bit);
+            buf[0] = (uintptr_t)p; // store pointer
+            buf[1] = (nbits | heap_bit); // set heap allocation bit
         }
     }
 
