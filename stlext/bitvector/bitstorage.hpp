@@ -152,9 +152,27 @@ private:
 template<class _Word, class _Alloc>
 class bitstorage<sbo, _Word, _Alloc> : _Alloc
 {
-    _Word __buf[2];
-    static constexpr size_t  __local_offset = 1;
-    static constexpr _Word   __local_mask   = _Word(~uint8_t(0)) << (sizeof(_Word) * CHAR_BIT - CHAR_BIT);
+    static_assert(sizeof(_Word) <= sizeof(uintptr_t), "");
+
+
+    // bits per pointer
+    static const size_t bpp = sizeof(uintptr_t)*CHAR_BIT;
+
+    // maximum number of local bits
+    static const size_t max_local_bits = 2 * bpp - CHAR_BIT;
+
+    // bit indicated heap allocated storage
+    static const uintptr_t heap_bit = uintptr_t(1) << (bpp - 1);
+
+    // bit-mask for local control block	(pointer aligned)
+    static const uintptr_t local_mask = (~uintptr_t(0) >> CHAR_BIT);
+
+    // bit-mask for local control block (word aligned)
+    static const _Word wlocal_mask = (~_Word(0) >> CHAR_BIT);
+
+    // control block offset in bits
+    static const size_t local_offset = bpp - CHAR_BIT;
+
 public:
     typedef _Alloc            allocator_type;
     typedef size_t            size_type;
@@ -164,63 +182,74 @@ public:
     typedef bit_traits<_Word> traits_type;
 
     static constexpr size_t max_bits = size_t(1) << (sizeof(size_t) * CHAR_BIT - 1);
-    static constexpr size_t max_local_bits = ( (sizeof(__buf) - 1) * CHAR_BIT );
+
     static constexpr size_t bpw = traits_type::bpw;
 
 
     bitstorage()
     {
-        __clearmem(__buf, sizeof(__buf)/sizeof(__buf[0]));
+        __clearmem(buf, 2);
     }
 
     bitstorage(const _Alloc& al)
         : _Alloc(al)
     {
-        __clearmem(__buf, sizeof(__buf)/sizeof(__buf[0]));
+        __clearmem(buf, 2);
     }
 
     bitstorage(const bitstorage& other) :
         _Alloc(other)
     {
-        bool _s_local = other.__is_local();
-        size_t nbits = other.__get_nbits(_s_local);
-        if (!_s_local) {
-            pointer addr = __allocate_blocks(nbits);
-            __movemem(addr, other.__get_heap(), traits_type::bit_space(nbits));
-            __put_heap(addr, nbits);
+        if (other.__is_local()) {
+            __movemem((pointer)buf, (pointer)other.buf, size_t(2));
         } else {
-            __put_local(other.__get_local(), nbits);
+            size_t n = other.size();
+            size_t nwords = bit_traits<_Word>::bit_space(n);
+            const_pointer wp = other.data();
+            pointer p = this->allocate(nwords);
+            __movemem(p, wp, nwords);
+            __reset(p, n);
         }
     }
 
     bitstorage operator=(const bitstorage& other) = delete;
 
     ~bitstorage() {
-        clear();
+        this->clear();
     }
 
     allocator_type get_allocator() const { return (*this); }
 
 
     pointer data() {
-        return __get_ptr(__is_local());
+        return (__is_heap() ?
+                    reinterpret_cast<pointer>(buf[0]) :
+                    reinterpret_cast<pointer>(buf));
     }
 
     const_pointer data() const {
-        return __get_ptr(__is_local());
+        return (__is_heap() ?
+                    reinterpret_cast<const_pointer>(buf[0]) :
+                    reinterpret_cast<const_pointer>(buf));
     }
 
     size_t size() const {
-        return __get_nbits(__is_local());
+        /*if (__is_heap())
+            return (buf[1] & ~heap_bit);
+         else
+            return (buf[1] >> (bpp - CHAR_BIT));
+        */
+        // branchless version of the above
+        unsigned flag =  __is_local();
+        return (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
     }
 
     void clear()
     {
         if (__is_heap()) {
-            this->__deallocate_blocks(__get_heap(),
-                                      __get_nbits(false));
+            this->deallocate(reinterpret_cast<pointer>(buf[0]), bit_traits<_Word>::bit_space(buf[1] & ~heap_bit));
         }
-        __clearmem(__buf, sizeof(__buf)/sizeof(__buf[0]));
+        __clearmem(buf, 2);
     }
 
     void shrink() {
@@ -235,14 +264,11 @@ protected:
             return;
         }
 
-        size_t nbits = size();
-        if (n == nbits)
-            return;
-
-        if (n < nbits) {
-            __sqeeze(nbits, nbits - n);
-        } else {
-            __expand(nbits, n - nbits);
+        size_t nbits = this->size();
+        if (n < nbits)
+            __shrink(nbits, n);
+        else {
+            __expand(nbits, n);
         }
     }
 
@@ -250,27 +276,36 @@ protected:
     {
         // FIXME: test me carefully!!!
         // FIXME: fix bugs!!!
+
         // get storage type
-        bool _s_local = __is_local();
-        // get actual number of bits
-        size_t n = __get_nbits(_s_local);
-        // get simple mask
-        _Word mask = (n % bpw != 0) ? ((static_cast<_Word>(1) << (n % bpw)) - 1) : (~_Word(0));
-        // conditionally set sbo_mask bits without branching
-        mask |= (mask & ~__local_mask) | (-_s_local & __local_mask);
+        unsigned flag = __is_local();
+        // get actual number of bits without branching
+        size_t n = (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
+        // get pointer to the words
+        pointer wp = flag ? reinterpret_cast<pointer>(buf) : reinterpret_cast<pointer>(buf[0]);
+
+        size_t blk = (n / bpw); // block index
+        size_t bit = (n % bpw); // bit index
+
+        // mask bits higher than bit
+        _Word mask = (bit != 0) ? ((_Word(1) << bit) - 1) : (~_Word(0));
+
+        size_t i = (sizeof(buf)/sizeof(_Word)-1);
+        if (blk == i && flag)
+            mask |= ~wlocal_mask;
         // mask higest bits of higest word
-        __buf[traits_type::block_index(n)] &= mask;
+        wp[blk] &= mask;
     }
 
     void __bitwise_shl(size_t pos)
     {
         bool _s_local = __is_local();
-        size_t _s_bits = __get_nbits(_s_local);
-        pointer blocks = __get_ptr(_s_local);
+        uint8_t _cblk = _s_local ? __get_ctrl() : 0;
+        pointer blocks = this->data();
 
         // shift left by pos, first by words then by bits
         const std::ptrdiff_t _wordshift = (std::ptrdiff_t)traits_type::block_index(pos);
-        const size_t _nwords = traits_type::bit_space(_s_bits) - 1;
+        const size_t _nwords = traits_type::bit_space(this->size()) - 1;
         if (_wordshift != 0)
             for (std::ptrdiff_t _wpos = _nwords; 0 <= _wpos; --_wpos) // shift by words
                 blocks[_wpos] = _wordshift <= _wpos ? blocks[_wpos - _wordshift] : (_Word)0;
@@ -283,7 +318,7 @@ protected:
         }
 
         if (_s_local) { // restore control block
-            __put_local(blocks, _s_bits);
+            __put_ctrl(_cblk);
         }
         __sanitize_bits();
     }
@@ -291,12 +326,12 @@ protected:
     void __bitwise_shr(size_t pos)
     {
         bool _s_local = __is_local();
-        size_t _s_bits = __get_nbits(_s_local);
-        pointer blocks = __get_ptr(_s_local);
+        uint8_t _cblk = _s_local ? __get_ctrl() : 0;
+        pointer blocks = this->data();
 
         // shift right by pos, first by words then by bits
         const std::ptrdiff_t _wordshift = (std::ptrdiff_t)traits_type::block_index(pos);
-        const size_t _nwords = traits_type::bit_space(_s_bits) - 1;
+        const size_t _nwords = traits_type::bit_space(this->size()) - 1;
         if (_wordshift != 0)
             for (std::ptrdiff_t _wpos = 0; _wpos <= (std::ptrdiff_t)_nwords; ++_wpos)
                 blocks[_wpos] = (_wordshift <= (std::ptrdiff_t)_nwords - _wpos ? blocks[_wpos + _wordshift] : (_Word)0);
@@ -309,7 +344,7 @@ protected:
         }
 
         if (_s_local) { // restore control block
-            __put_local(blocks, _s_bits);
+            __put_ctrl(_cblk);
         }
         __sanitize_bits();
     }
@@ -318,148 +353,99 @@ protected:
 private:
     template<class T>
     static inline void __clearmem(T* ptr, size_t n) {
-#ifdef STDX_CMPLR_GNU
+    #ifdef STDX_CMPLR_GNU
         __builtin_memset(ptr, 0, sizeof(T)*n);
-#else
+    #else
         std::memset(ptr, 0, sizeof(T)*n);
-#endif
-    }
+    #endif
+     }
 
     template<class T>
-    static inline void __movemem(T* addr_dst, T* addr_src, size_t n) {
-#ifdef STDX_CMPLR_GNU
+    static inline void __movemem(T* addr_dst, const T* addr_src, size_t n) {
+    #ifdef STDX_CMPLR_GNU
         __builtin_memmove(addr_dst, addr_src, sizeof(T)*n);
-#else
-        std::memmove(addr_dst, addr_src, sizeof(T)*n);
-#endif
+    #else
+         std::memmove(addr_dst, addr_src, sizeof(T)*n);
+    #endif
+     }
+
+
+
+    uint8_t __get_ctrl() const {
+        return (uint8_t)(buf[1] >> local_offset);
     }
 
-    inline void __put_heap(_Word* addr, size_t nbits) {
-        if (addr != __buf)
-            __buf[0] = reinterpret_cast<uintptr_t>(addr);
-        __buf[1] = nbits;
-        __buf[1] |= _Word(1) << (bpw - 1);
+    void __put_ctrl(uint8_t ctl) {
+        buf[1] &= local_mask;
+        buf[1] |= (uintptr_t(ctl) << local_offset);
     }
 
-    inline pointer __get_heap() const {
-        return reinterpret_cast<pointer>(__buf[0]);
-    }
 
-    inline void __put_local(_Word* addr, size_t nbits)
+    void __reset(pointer p, size_t nbits)
     {
-        uint8_t* p = reinterpret_cast<uint8_t*>(__buf);
-        if (addr != __buf) {
-            __movemem(p, reinterpret_cast<uint8_t*>(addr), (nbits + CHAR_BIT-1) / CHAR_BIT);
-        }
-        p[sizeof(__buf)-1] = nbits;
-    }
-
-    inline pointer __get_local() const {
-        return const_cast<pointer>(__buf);
-    }
-
-
-    inline pointer __get_ptr(bool __local) const {
-        return ( __local ? __get_local() : __get_heap()) ;
-    }
-
-    inline size_t __get_nbits(bool __local) const {
-        return ( __local ?
-                     static_cast<size_t>(__buf[__local_offset] >> (bpw - CHAR_BIT)) :
-                     static_cast<size_t>(__buf[__local_offset] & ~(_Word(1) << (bpw - 1))) );
-    }
-
-
-
-    inline bool __is_local() const {
-        return !__is_heap();
-    }
-
-    inline bool __is_heap() const {
-        return ((__buf[__local_offset] >> (bpw-1)) == 0x1);
-    }
-
-
-
-    inline pointer __allocate_blocks(size_t nbits) {
-        return static_cast<_Alloc*>(this)->allocate(traits_type::bit_space(nbits));
-    }
-
-    inline void __deallocate_blocks(pointer p, size_t nbits) {
-        if (nbits > 0)
-            static_cast<_Alloc*>(this)->deallocate(p, traits_type::bit_space(nbits));
-    }
-
-
-    void __expand(size_t nbits, size_t amount)
-    {
-        if ((nbits % bpw) > amount) {
-            if (__is_local()) {
-                __put_local(__buf, nbits + amount);
-            } else {
-                __put_heap(__buf, nbits + amount);
-            }
-            return;
-        }
-
-        pointer ptr = nullptr;
-        if (__is_local()) {
-            if ((amount + nbits) < max_local_bits) {
-                __put_local(__buf, nbits + amount);
-                return;
-            }
-            ptr = __get_local();
+        if (nbits < max_local_bits) {
+            buf[1] &= local_mask;
+            buf[1] |= (nbits << local_offset);
+            buf[1] &= ~heap_bit;
         } else {
-            ptr = __get_heap();
+            buf[0] = (uintptr_t)p;
+            buf[1] = (nbits | heap_bit);
         }
-
-        size_t new_size = nbits + amount;
-        pointer addr = this->__allocate_blocks(new_size);
-        if (ptr != nullptr)
-            __movemem((uint8_t*)addr, (uint8_t*)ptr, bit_traits<uint8_t>::bit_space(nbits));
-
-        if (__is_heap())
-            this->__deallocate_blocks(ptr, nbits);
-
-        __put_heap(addr, new_size);
     }
 
-    void __sqeeze(size_t nbits, size_t amount)
+    bool __is_heap() const {
+        return ((buf[1] & heap_bit) != 0);
+    }
+
+    bool __is_local() const {
+        return ((buf[1] & heap_bit) == 0);
+    }
+
+    void __expand(size_t nbits, size_t n)
     {
-        // FIXME: bugs!
-        if ((nbits % bpw) > amount) {
-            if (__is_local()) {
-                __put_local(__buf, nbits - amount);
-            } else {
-                __put_heap(__buf, nbits - amount);
+        // at this point n is always greater than nbits
+        if (n < max_local_bits) {
+            __reset((pointer)buf, n);
+        } else {
+            size_t nwords = bit_traits<_Word>::bit_space(nbits);
+            size_t new_nwords = bit_traits<_Word>::bit_space(n);
+            pointer wp = this->data();
+            pointer p = this->allocate(new_nwords);
+            __movemem(p, wp, nwords);
+            __reset(p, n);
+            if (wp != (pointer)buf) {
+                this->deallocate(wp, nwords);
             }
             __sanitize_bits();
-            return;
         }
+    }
 
-        if (__is_local()) {
-            __put_local(__buf, nbits - amount);
-            __sanitize_bits();
-            return;
-        }
-
-        size_t new_size = nbits - amount;
-        pointer ptr = __get_heap();
-        if (new_size < max_local_bits) {
-            __put_local(ptr, new_size);
+    void __shrink(size_t nbits, size_t n)
+    {
+        // at this point n is always less than nbits
+        size_t nwords = bit_traits<_Word>::bit_space(nbits);
+        size_t new_words = bit_traits<_Word>::bit_space(n);
+        pointer p = nullptr;
+        pointer wp = this->data();
+        if (n < max_local_bits) {
+            p = (pointer)buf;
         } else {
-            pointer addr = this->__allocate_blocks(new_size);
-            __movemem(addr, ptr, traits_type::bit_space(new_size));
-            __put_heap(addr, new_size);
+            p = this->allocate(new_words);
+        }
+        __movemem(p, wp, new_words);
+        __reset(p, n);
+
+        if (wp != (pointer)buf) {
+            this->deallocate(wp, nwords);
         }
 
-        // deallocate old pointer
-        this->__deallocate_blocks(ptr, nbits);
-
-        // clear unused bits
         __sanitize_bits();
     }
 
+
+
+private:
+    uintptr_t buf[2];
 };
 
 #endif

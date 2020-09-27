@@ -82,13 +82,13 @@ namespace detail
     // bitvector<> specialization
     template<
         class _Word,
-        size_t _Opt,
-        class _Alloc
+        class _Alloc,
+        size_t _Opt
     >
-    class binrep< stdx::bitvector<_Word, _Opt, _Alloc> >
+    class binrep< stdx::bitvector<_Word, _Alloc, _Opt> >
     {
     public:
-        typedef stdx::bitvector<_Word, _Opt, _Alloc> argument_type;
+        typedef stdx::bitvector<_Word, _Alloc, _Opt> argument_type;
 
         binrep(const argument_type& x, size_t digits, const char* delim) :
             __m_val(x), __m_ndgts(digits), __m_sep(delim) {
@@ -161,10 +161,10 @@ detail::binrep<T> bin(const T& x, size_t digits = 0, const char* delim = " ") {
     return detail::binrep<T>(x, digits, delim);
 }
 
-template<class _Word, size_t _Opt, class _Alloc>
-detail::binrep< stdx::bitvector<_Word, _Opt, _Alloc> > bin(const stdx::bitvector<_Word, _Opt, _Alloc>& x,
+template<class _Word, class _Alloc, size_t _Opt>
+detail::binrep< stdx::bitvector<_Word, _Alloc, _Opt> > bin(const stdx::bitvector<_Word, _Alloc, _Opt>& x,
                                                            size_t digits = 0, const char* delim = " ") {
-    typedef stdx::bitvector<_Word, _Opt, _Alloc> value_type;
+    typedef stdx::bitvector<_Word, _Alloc, _Opt> value_type;
     return detail::binrep<value_type>(x, digits, delim);
 }
 

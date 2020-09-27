@@ -7,8 +7,8 @@
 
 namespace detail 
 {
-    template<class _Word, size_t _Opt, class _Alloc>
-    std::string to_string(const stdx::bitvector<_Word, _Opt, _Alloc>& bits) {
+    template<class _Word, class _Alloc, size_t _Opt>
+    std::string to_string(const stdx::bitvector<_Word, _Alloc, _Opt>& bits) {
         return bits;
 	}
 
@@ -29,11 +29,10 @@ TEST_CASE("bitvector/constructor", "[bitvector]")
 
 	typedef bitvector<> bitvec;
 	std::bitset<65> _bits("11010101010101010101111111111000000011101000111110011111010101111");
-	bitvec bits(_bits);
+    /*bitvec bits = _bits;
 
     bitvec bits0;
-	bitvec bits1(64);
-    /*bitvec bits2(128);*/
+    bitvec bits1(64, 0);
     bitvec bits3 = bits;
     bitvec bits4 = _bits;
 
@@ -41,8 +40,15 @@ TEST_CASE("bitvector/constructor", "[bitvector]")
     REQUIRE(_bits.to_string() == to_string(bits3));
     REQUIRE(_bits.to_string() == to_string(bits4));
 	REQUIRE(bits0.empty());
-    REQUIRE(bits1.size() == 64);
-    //REQUIRE(bits2.nblocks() == 2);
+    REQUIRE(bits1.size() == 64);*/
+
+    typedef bitvector<uint16_t> bvec16;
+    bvec16 zero(121, false);
+    bvec16 ident(121, true);
+    bvec16 xmask(~zero);
+    bvec16 smask(~ident);
+
+    REQUIRE(zero.nblocks() == 8);
 }
 
 
@@ -1379,10 +1385,10 @@ TEST_CASE("bitvector/bitap_search", "[bitvector]")
     bitvec source = bsource;
     bitvec pattern = bpattern;
 
-    { // check entry algorithm
+    /*{ // check entry algorithm
         std::allocator< std::bitset<512> > al;
         auto pos = stdx::detail::__bitap_bitsearch(al, source.begin(), source.end(),
-                                                       pattern.begin(), pattern.end(), 0);
+                                                       pattern.begin(), pattern.end(), 1);
 
         size_t i = 0;
         for(; pos != source.end(); ++i) {
@@ -1390,13 +1396,13 @@ TEST_CASE("bitvector/bitap_search", "[bitvector]")
             REQUIRE(i < sizeof(offsets)/sizeof(offsets[0]));
             REQUIRE(offset == offsets[i]);
             pos = stdx::detail::__bitap_bitsearch(al, ++pos, source.end(),
-                                                      pattern.begin(), pattern.end(), 0);
+                                                      pattern.begin(), pattern.end(), 1);
         }
         REQUIRE(i == sizeof(offsets)/sizeof(offsets[0]));
-    }
+    }*/
 
     { // check searcher
-        stdx::detail::bitap_searcher< std::bitset<512> > searcher(pattern.begin(), pattern.end(), 0);
+        stdx::detail::_Bitap_searcher< 512 > searcher(pattern.begin(), pattern.end(), 1);
         auto pos = stdx::detail::search(source.begin(), source.end(), searcher);
 
         size_t i = 0;
