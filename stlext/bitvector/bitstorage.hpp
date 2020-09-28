@@ -241,13 +241,15 @@ public:
         */
         // branchless version of the above
         unsigned flag =  __is_local();
-        return (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
+        //return (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
+        return (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset & -(uintptr_t)flag));
     }
 
     void clear()
     {
         if (__is_heap()) {
-            this->deallocate(reinterpret_cast<pointer>(buf[0]), bit_traits<_Word>::bit_space(buf[1] & ~heap_bit));
+            this->deallocate(reinterpret_cast<pointer>(buf[0]),
+                             bit_traits<_Word>::bit_space(buf[1] & ~heap_bit));
         }
         __clearmem(buf, 2);
     }
@@ -279,7 +281,7 @@ protected:
         // get storage type
         unsigned flag = __is_local();
         // get actual number of bits without branching
-        size_t n = (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
+        size_t n = (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset & -(uintptr_t)flag));
         // get pointer to the words
         pointer wp = flag ? reinterpret_cast<pointer>(buf) : reinterpret_cast<pointer>(buf[0]);
 

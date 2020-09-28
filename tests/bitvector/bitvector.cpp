@@ -142,6 +142,22 @@ TEST_CASE("bitvector/memory", "[bitvector]")
 	REQUIRE(s2.size() == 0);
 	REQUIRE(s2.empty());
 
+    std::string str;
+    t.reserve(524);
+    for (size_t i = 1; i < 524; ++i) {
+        s2.resize(i, true);
+        str.push_back('1');
+        REQUIRE(s2.size() == i);
+        REQUIRE(to_string(s2) == str);
+    }
+
+    for (size_t i = 523; i >= 1; --i) {
+        s2.resize(i, true);
+        REQUIRE(s2.size() == i);
+        REQUIRE(to_string(s2) == str);
+        str.pop_back();
+    }
+
 }
 
 
