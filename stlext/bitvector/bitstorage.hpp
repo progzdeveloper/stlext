@@ -181,7 +181,7 @@ public:
     typedef const _Word*      const_pointer;
     typedef bit_traits<_Word> traits_type;
 
-    static constexpr size_t max_bits = size_t(1) << (sizeof(size_t) * CHAR_BIT - 1);
+    static constexpr size_t max_bits = uintptr_t(1) << (sizeof(uintptr_t) * CHAR_BIT - 1);
 
     static constexpr size_t bpw = traits_type::bpw;
 
