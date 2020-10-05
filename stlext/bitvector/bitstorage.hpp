@@ -372,11 +372,11 @@ private:
 
 
 
-    uint8_t __get_ctrl() const {
+    inline uint8_t __get_ctrl() const {
         return (uint8_t)(buf[1] >> local_offset);
     }
 
-    void __put_ctrl(uint8_t ctl) {
+    inline void __put_ctrl(uint8_t ctl) {
         buf[1] &= local_mask;
         buf[1] |= (uintptr_t(ctl) << local_offset);
     }
@@ -394,11 +394,11 @@ private:
         }
     }
 
-    bool __is_heap() const {
+    inline bool __is_heap() const {
         return ((buf[1] & heap_bit) != 0);
     }
 
-    bool __is_local() const {
+    inline bool __is_local() const {
         return ((buf[1] & heap_bit) == 0);
     }
 
