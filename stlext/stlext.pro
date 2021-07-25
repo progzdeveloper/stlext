@@ -180,7 +180,8 @@ HEADERS += \
     iterator/variant_iterator.hpp \
     iterator/zigzag_iterator.hpp \
     algorithm/ext/adjacent_pairs.hpp \
-    algorithm/ext/indexed_remove.hpp
+    algorithm/ext/indexed_remove.hpp \
+    components/string_builder.hpp
 
 SOURCES +=
 

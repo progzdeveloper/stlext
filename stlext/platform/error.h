@@ -46,12 +46,9 @@
 #include <signal.h>
 #endif
 
-
 #ifndef _STDX_ERROR_MESSAGE_MAX_BUFFER_SIZE
 #define _STDX_ERROR_MESSAGE_MAX_BUFFER_SIZE 4096 // maximum size of error message
 #endif
-
-
 
 #ifdef _STDX_DEBUG
 

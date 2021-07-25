@@ -11,8 +11,6 @@
 #include "iostreams/iomanips.h"
 #include "iostreams/utilities.h"
 
-
-
 void setup_cmdline(stdx::command_line& cmdline)
 {
 	cmdline.emplace("filter=", "filter examples by name using regular expression");

@@ -29,10 +29,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#if STDX_CMPLR_GNU && (STDX_CMPLR_GNU >= 500)
-#include <experimental/string_view>
+#if __GNUC__
+#if (STDX_CMPLR_GNU < 600)
 #include "../platform/common.h"
-
+#include <experimental/string_view>
 _STDX_BEGIN
     using std::experimental::basic_string_view;
     using std::experimental::string_view;
@@ -40,7 +40,9 @@ _STDX_BEGIN
     using std::experimental::u16string_view;
     using std::experimental::u32string_view;
 _STDX_END
-
+#else
+#include <string_view>
+#endif
 #else
 
 #include <utility>

@@ -34,79 +34,85 @@
 
 _STDX_BEGIN
 
+namespace detail {
+
+template <uintmax_t n>
+struct choose_initial_n {
+    static const bool c = ((uintmax_t(1) << n << n) != 0);
+    static const uintmax_t value = (!c*n + choose_initial_n<2 * c*n>::value);
+};
+
+template <>
+struct choose_initial_n<0> {
+    static const uintmax_t value = 0;
+};
+
+// start computing from n_zero - must be a power of two
+static const uintmax_t n_zero = 16;
+static const uintmax_t initial_n = choose_initial_n<n_zero>::value;
+
+template <uintmax_t x, uintmax_t n = initial_n>
+struct static_log2_impl {
+    static const bool c = ((x >> n) > 0); // x >= 2**n ?
+    static const uintmax_t value = c*n + (static_log2_impl< (x >> c*n), n / 2 >::value);
+};
+
+template <>
+struct static_log2_impl<1, 0> {
+    static const uintmax_t value = 0;
+};
+
+} // end namespace detail
+
 template <uintmax_t X>
 struct static_log2
 {
 private:
-	// choose_initial_n<>
-	//
-	// Recursively doubles its integer argument, until it
-	// becomes >= of the "width" (C99, 6.2.6.2p4) of
-	// static_log2_argument_type.
-	//
-	// Used to get the maximum power of two less then the width.
-	//
-	// Example: if on your platform argument_type has 48 value
-	//          bits it yields n=32.
-	//
-	// It's easy to prove that, starting from such a value
-	// of n, the core algorithm works correctly for any width
-	// of static_log2_argument_type and that recursion always
-	// terminates with x = 1 and n = 0 (see the algorithm's
-	// invariant).
+    // choose_initial_n<>
+    //
+    // Recursively doubles its integer argument, until it
+    // becomes >= of the "width" (C99, 6.2.6.2p4) of
+    // static_log2_argument_type.
+    //
+    // Used to get the maximum power of two less then the width.
+    //
+    // Example: if on your platform argument_type has 48 value
+    //          bits it yields n=32.
+    //
+    // It's easy to prove that, starting from such a value
+    // of n, the core algorithm works correctly for any width
+    // of static_log2_argument_type and that recursion always
+    // terminates with x = 1 and n = 0 (see the algorithm's
+    // invariant).
 
-	typedef uintmax_t argument_type;
-	typedef uintmax_t result_type;
-
-	template <result_type n>
-	struct choose_initial_n {
-		static const bool c = ((argument_type(1) << n << n) != 0);
-		static const result_type value = (!c*n + choose_initial_n<2 * c*n>::value);
-	};
-
-	template <>
-	struct choose_initial_n<0> {
-		static const result_type value = 0;
-	};
+    typedef uintmax_t argument_type;
+    typedef uintmax_t result_type;
 
 
-	// start computing from n_zero - must be a power of two
-	static const result_type n_zero = 16;
-	static const result_type initial_n = choose_initial_n<n_zero>::value;
-
-	// static_log2_impl<>
-	//
-	// * Invariant:
-	//                 2n
-	//  1 <= x && x < 2    at the start of each recursion
-	//                     (see also choose_initial_n<>)
-	//
-	// * Type requirements:
-	//
-	//   argument_type maybe any unsigned type with at least n_zero + 1
-	//   value bits. (Note: If larger types will be standardized -e.g.
-	//   unsigned long long- then the argument_type typedef can be
-	//   changed without affecting the rest of the code.)
-	//
-
-	template <argument_type x, result_type n = initial_n>
-	struct static_log2_impl {
-		static const bool c = ((x >> n) > 0); // x >= 2**n ?
-		static const result_type value = c*n + (static_log2_impl< (x >> c*n), n / 2 >::value);
-	};
-
-	template <>
-	struct static_log2_impl<1, 0> {
-		static const result_type value = 0;
-	};
+    // static_log2_impl<>
+    //
+    // * Invariant:
+    //                 2n
+    //  1 <= x && x < 2    at the start of each recursion
+    //                     (see also choose_initial_n<>)
+    //
+    // * Type requirements:
+    //
+    //   argument_type maybe any unsigned type with at least n_zero + 1
+    //   value bits. (Note: If larger types will be standardized -e.g.
+    //   unsigned long long- then the argument_type typedef can be
+    //   changed without affecting the rest of the code.)
+    //
 
 public:
-	static const uintmax_t value = static_log2_impl<X>::value;
+    static const uintmax_t value = detail::static_log2_impl<X>::value;
 };
 
 
 template <>
 struct static_log2<0> { };
+
+
 
 _STDX_END
 

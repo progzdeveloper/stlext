@@ -34,12 +34,16 @@
 #include "bittraits.hpp"
 #include "bitalgo.hpp"
 
+#include "../mathext/static_log2.hpp"
+
 _STDX_BEGIN
 
 enum bitspace_optimization {
-    none,
-    sbo,
-    compact
+      none
+    , sbo
+#if defined(STDX_PROCESSOR_X86_64) || defined(STDX_PROCESSOR_IA64)
+    , compact
+#endif
 };
 
 
@@ -452,13 +456,143 @@ private:
 #endif
 
 
-/*
+// check if we on x64 platform
+#if defined(STDX_PROCESSOR_X86_64) || defined(STDX_PROCESSOR_IA64)
 template<class _Word, class _Alloc>
 class bitstorage<compact, _Word, _Alloc> : _Alloc
 {
+    static_assert(sizeof(_Word)  <= sizeof(uintptr_t), "");
+    static_assert(sizeof(size_t) <= sizeof(uintptr_t), "");
 
-};*/
+    // bits per pointer
+    static constexpr size_t bpp = sizeof(uintptr_t)*CHAR_BIT;
 
+    // number of bits of local control block
+    static constexpr size_t nlocal_bits = (stdx::static_log2<bpp>::value + 1);
+    // number of bits of heap control block
+    static constexpr size_t nheap_bits = 16;
+
+    // maximum number of local bits
+    static constexpr size_t max_local_bits = bpp - (stdx::static_log2<bpp>::value + 1);
+
+    // maximum number of local bits
+    static constexpr size_t max_heap_bits = size_t(1) << (nheap_bits - 1);
+
+    // bit indicated heap allocated storage
+    static constexpr uintptr_t heap_bit = uintptr_t(1) << (bpp - 1);
+
+    // bit-mask for local control block	(pointer aligned)
+    static constexpr uintptr_t local_mask = (~uintptr_t(0) >> nlocal_bits);
+
+    // bit-mask for local control block (word aligned)
+    static constexpr _Word wlocal_mask = (~_Word(0) >> nlocal_bits);
+
+    // local control block offset in bits
+    static constexpr size_t local_offset = bpp - nlocal_bits;
+    // heap control block offset in bits
+    static constexpr size_t heap_offset = bpp - nheap_bits;
+
+public:
+    typedef _Alloc            allocator_type;
+    typedef size_t            size_type;
+    typedef _Word             word_type;
+    typedef _Word*            pointer;
+    typedef const _Word*      const_pointer;
+    typedef bit_traits<_Word> traits_type;
+
+    static constexpr size_t max_bits = max_heap_bits;
+
+    static constexpr size_t bpw = traits_type::bpw;
+
+
+    bitstorage() : buf(0)
+    {
+    }
+
+    bitstorage(const _Alloc& al)
+        : _Alloc(al), buf(0)
+    {
+    }
+
+    bitstorage(const bitstorage& other) :
+        _Alloc(other)
+    {
+        if (other.__is_local()) {
+            buf = other.buf;
+        } else {
+            size_t n = other.size();
+            size_t nwords = bit_traits<_Word>::bit_space(n);
+            const_pointer wp = other.data();
+            pointer p = this->allocate(nwords);
+            __movemem(p, wp, nwords);
+            __reset(p, n);
+        }
+    }
+
+    ~bitstorage() {
+        this->clear();
+    }
+
+    allocator_type get_allocator() const { return (*this); }
+
+
+    pointer data() {
+        return reinterpret_cast<pointer>(buf & ~heap_bit);
+    }
+
+    const_pointer data() const {
+        return reinterpret_cast<const_pointer>(buf & ~heap_bit);
+    }
+
+    size_t size() const {
+        /*if (__is_heap())
+            return (buf[1] & ~heap_bit);
+         else
+            return (buf[1] >> (bpp - CHAR_BIT));
+        */
+        // branchless version of the above
+        unsigned flag =  __is_local();
+        //return (size_t) ((buf[1] & ~(heap_bit << flag)) >> (local_offset * flag));
+        return (size_t) ((buf & ~(heap_bit << flag)) >> (local_offset & -(uintptr_t)flag)) >> (heap_offset & flag);
+    }
+
+    void clear()
+    {
+        if (__is_heap()) {
+            this->deallocate(reinterpret_cast<pointer>(buf),
+                             bit_traits<_Word>::bit_space((buf & ~heap_bit) >> heap_offset));
+        }
+        buf = 0;
+    }
+
+    void shrink() {
+        // noop
+    }
+
+
+private:
+    inline bool __is_heap() const {
+        return ((buf & heap_bit) != 0);
+    }
+
+    inline bool __is_local() const {
+        return ((buf & heap_bit) == 0);
+    }
+
+
+    template<class T>
+    static inline void __movemem(T* addr_dst, const T* addr_src, size_t n) {
+    #ifdef STDX_CMPLR_GNU
+        __builtin_memmove(addr_dst, addr_src, sizeof(T)*n);
+    #else
+         std::memmove(addr_dst, addr_src, sizeof(T)*n);
+    #endif
+     }
+
+private:
+    uintptr_t buf;
+};
+#endif
 
 _STDX_END // end namespace stdx
 

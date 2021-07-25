@@ -36,9 +36,7 @@
 
 #include "interpret_traits.hpp"
 
-
 _STDX_BEGIN
-
 
 /*!
  * \brief class basic_invoker 
@@ -73,9 +71,6 @@ public:
 	typedef _Key    key_type;
 	typedef _Source source_type;
 	typedef _Traits traits_type;
-
-	template<class T>
-	friend class interpreter_proxy;
 
 	/*! 
 	 * \brief class basic_command basic interface for commands
@@ -155,9 +150,6 @@ public:
 	template<class _Class, class _Ret, class... _Args>
 	struct command < _Ret(_Class::*)(_Args...) > : public basic_command
 	{
-		/*static_assert(std::is_base_of<basic_invoker, _Class>::value,
-					  "_Class is not derived from basic_controller");*/
-
 		static const size_t arity = sizeof...(_Args); //!< function arity
 		typedef std::tuple<_Args...> tuple_type; //!< type of arguments tuple
 
@@ -183,51 +175,6 @@ public:
 
 	/*! \internal */
 	typedef std::unordered_map<key_type, std::unique_ptr<basic_command> > command_map;
-
-	/*!
-	* \brief The iterator class provides iterations over stored keys
-	*
-	* class iterator provides forward only iterator for keys stored
-	* in class basic_interpreter mapping.
-	*/
-	class iterator
-	{
-		friend class basic_invoker<_Key, _Source, _Traits>;
-
-		iterator(typename command_map::const_iterator __it) :
-			__m_it(__it) {
-		}
-	public:
-		typedef std::forward_iterator_tag iterator_category;
-
-		typedef key_type value_type;
-		typedef key_type& reference;
-		typedef const key_type& const_reference;
-		typedef key_type* pointer;
-		typedef const key_type* const_pointer;
-		typedef std::ptrdiff_t difference_type;
-		typedef std::ptrdiff_t distance_type;
-
-		iterator() {}
-		iterator(const iterator& __other) : __m_it(__other.__m_it) {}
-
-		const_reference operator*() const { return __m_it->first; }
-		const_reference operator->() const { return __m_it->first; }
-
-		iterator& operator++() { ++__m_it; return (*this); }
-		iterator operator++(int) { iterator tmp = (*this); ++__m_it; return tmp; }
-
-		friend bool operator== (const iterator& __lhs, const iterator& __rhs) {
-			return (__lhs.__m_it == __rhs.__m_it);
-		}
-
-		friend bool operator!= (const iterator& __lhs, const iterator& __rhs) {
-			return (__lhs.__m_it != __rhs.__m_it);
-		}
-
-	private:
-		typename command_map::const_iterator __m_it;
-	};
 
 	/*!
 	 * \brief default constructor
