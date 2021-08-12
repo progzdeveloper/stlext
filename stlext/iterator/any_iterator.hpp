@@ -168,7 +168,6 @@ private:
 	//! \inner iterator swapping function
 	inline void swap(any_iterator& rhs){
 		std::swap(__m_body, rhs.__m_body);
-		return *this;
 	}
 	/*!
 	Abstract Interface (Wrapper) for iterators

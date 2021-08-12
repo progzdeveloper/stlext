@@ -41,9 +41,6 @@
 
 _STDX_BEGIN
 
-
-
-
 /*!
  *
  * \brief template class_factory<_Base, _Key, _Args...> provides generic
@@ -71,7 +68,7 @@ template<
     class _Key,
     class _KeyHash = std::hash<_Key>,
     class _KeyComp = std::equal_to<_Key>,
-    class _Alloc = std::allocator< void >
+    class _Alloc = std::allocator<void>
 >
 class class_factory
 {
@@ -82,26 +79,22 @@ class class_factory
                   "_Base type cannot be a reference type");
 
 public:
-    typedef _Key key_type;   //!< type of key
-    typedef _Base base_type; //!< type of base class
+    using key_type = _Key ;   //!< type of key
+    using base_type = _Base ; //!< type of base class
+
+    using identifier = std::pair<key_type, const std::type_info&>;
 
 protected:
     class creator_base
     {
     public:
-        creator_base(const std::type_info& ti, size_t size) :
-            __m_args_meta(ti), __m_size(size) { }
+        creator_base(size_t size) : __m_size(size) { }
 
         virtual ~creator_base() { }
 
         virtual const std::type_info& product_type() const = 0;
 
-        inline const std::type_info& args_type() const {
-            return __m_args_meta;
-        }
-
     protected:
-        const std::type_info& __m_args_meta;
         const size_t __m_size;
     };
 
@@ -111,14 +104,14 @@ protected:
     {
     public:
         basic_creator(size_t n) :
-            creator_base(typeid(std::tuple<_Args...>), n) {
+            creator_base(n) {
         }
         
         template<class _Allocator>
         inline _Base* create(const _Allocator& al, _Args&&... args) const
         {
             // rebind allocator
-            typedef typename _Allocator::template rebind<char>::other allocator_type;
+            using allocator_type = typename std::allocator_traits<_Allocator>::template rebind_alloc<char>;
 
             allocator_type alloc_proxy(al);
             char* addr = nullptr;
@@ -159,10 +152,23 @@ protected:
             return new(addr)_Product(std::forward<_Args>(args)...);
         }
     };
-    
-    
-    typedef typename _Alloc::template rebind< std::pair<const _Key, creator_base*> >::other allocator_type;
-    typedef std::unordered_multimap<_Key, creator_base*, _KeyHash, _KeyComp, allocator_type> creator_map;
+
+    struct hasher : public _KeyHash
+    {
+        inline size_t operator()(const identifier& id) const {
+            return _KeyHash::operator()(id.first) ^ id.second.hash_code();
+        }
+    };
+
+    struct key_comp : public _KeyComp
+    {
+        inline size_t operator()(const identifier& lhs, const identifier& rhs) const {
+            return (_KeyComp::operator()(lhs.first, rhs.first) && lhs.second == rhs.second);
+        }
+    };
+
+    using allocator_type = typename std::allocator_traits<_Alloc>::template rebind_alloc<std::pair<const identifier, creator_base*>>;
+    using creator_map = std::unordered_map<identifier, creator_base*, hasher, key_comp, allocator_type>;
 
     struct deallocator : 
         public allocator_type
@@ -184,8 +190,9 @@ protected:
     template<class _Product, class... _Args>
     struct registerer 
     {
-        typedef typename std::decay<_Product>::type product_type;
-        typedef creator<product_type, typename std::decay<_Args>::type...> creator_type;
+        using product_type = typename std::decay_t<_Product>;
+        using args_tuple = std::tuple<typename std::decay<_Args>::type...>;
+        using creator_type = creator<product_type, typename std::decay<_Args>::type...>;
         
         static_assert(std::is_base_of<_Base, product_type>::value, "_Product does not inherits _Base class");
         
@@ -193,8 +200,8 @@ protected:
         static inline creator_type* make_creator(const _Allocator& al)
         {
             // rebind allocator
-            typedef typename allocator_type::template rebind<creator_type>::other allocator_type;
-            
+            using allocator_type = typename std::allocator_traits<_Allocator>::template rebind_alloc<creator_type>;
+
             allocator_type alloc_proxy(al);
             creator_type* addr = nullptr;
             try {
@@ -208,6 +215,10 @@ protected:
                 throw;
             }
             return addr;
+        }
+
+        static inline identifier make_identifier(const key_type& key) {
+            return { key, typeid(args_tuple) };
         }
     };
 
@@ -237,13 +248,13 @@ public:
     public:
         typedef std::forward_iterator_tag iterator_category;
 
-        typedef key_type value_type;
-        typedef key_type& reference;
-        typedef const key_type& const_reference;
-        typedef key_type* pointer;
-        typedef const key_type* const_pointer;
-        typedef std::ptrdiff_t difference_type;
-        typedef std::ptrdiff_t distance_type;
+        using value_type = identifier;
+        using reference = identifier& ;
+        using const_reference = const identifier&;
+        using pointer = identifier*;
+        using const_pointer = const identifier*;
+        using difference_type = std::ptrdiff_t;
+        using distance_type = std::ptrdiff_t;
 
         _Iterator() {}
         _Iterator(const _Iterator& other) : __m_it(other.__m_it) {}
@@ -252,7 +263,6 @@ public:
         const_pointer operator->() const { return &__m_it->first;  }
 
         const std::type_info& product_type() const { return __m_it->second->product_type(); }
-        const std::type_info& args_type() const { return __m_it->second->args_type(); }
 
         _Iterator& operator++() { ++__m_it; return (*this); }
         _Iterator operator++(int) { iterator tmp = (*this); ++__m_it; return tmp; }
@@ -301,11 +311,11 @@ public:
      * \param key key for _Product type
      */
     template<class _Product, class... _Args>
-    inline typename std::enable_if<!std::is_function<_Product>::value, void>::type
+    inline typename std::enable_if_t<!std::is_function_v<_Product>, void>
         registrate(const key_type& key)
     {
-        using namespace std;
-        __m_creators.emplace(key, registerer<_Product, _Args...>::make_creator(__m_creators.get_allocator()));
+        using registeter_type = registerer<_Product, _Args...>;
+        __m_creators.emplace(registeter_type::make_identifier(key), registeter_type::make_creator(__m_creators.get_allocator()));
     }
 
     /*!
@@ -317,11 +327,11 @@ public:
      * \param key key for _Product type
      */
     template<class _Fn>
-    inline typename std::enable_if<std::is_function<_Fn>::value, void>::type
+    inline typename std::enable_if_t<std::is_function_v<_Fn>, void>
         registrate(const key_type& key)
     {
-        using namespace std;
-        __m_creators.emplace(key, registerer<_Fn>::make_creator(__m_creators.get_allocator())); 
+        using registeter_type = registerer<_Fn>;
+        __m_creators.emplace(registeter_type::make_identifier(key), registeter_type::make_creator(__m_creators.get_allocator()));
     }
 
 
@@ -337,15 +347,11 @@ public:
     inline base_type* allocate_object(const _Allocator& al, const _Key& key, _Args&&... args) const
     {
         using namespace std;
-        typedef basic_creator<_Args...> creator_type;
-        typedef typename creator_map::const_reference reference_type;
+        using creator_type = basic_creator<_Args...> ;
         static const type_info& args_ti = typeid(tuple<typename decay<_Args>::type...>);
 
-        auto range = __m_creators.equal_range(key);
-        auto it = find_if(range.first, range.second, [&](reference_type c) {
-            return (c.second->args_type() == args_ti);
-        });
-        return (it != range.second ?
+        auto it = __m_creators.find({ key, args_ti });
+        return (it != __m_creators.end() ?
                     static_cast<creator_type*>(it->second)->create(al, forward<_Args>(args)...) :
                     nullptr);
     }
@@ -372,27 +378,15 @@ public:
      * \brief Iterator pointing to first key
      * \return const key iterator
      */
-    inline iterator begin() const { return _Iterator(__m_creators.begin()); }
+    inline iterator begin() const {
+        return _Iterator(__m_creators.begin());
+    }
     /*!
      * \brief Iterator pointing to one-past-last key
      * \return const key iterator
      */
-    inline iterator end() const { return _Iterator(__m_creators.end()); }
-
-    /*!
-     * \brief Iterator pointing to first element with key key
-     * \return const key iterator
-     */
-    inline iterator begin(const key_type& key) const {
-        return iterator(__m_creators.lower_bound(key));
-    }
-
-    /*!
-     * \brief Iterator pointing to last element with key key
-     * \return const key iterator
-     */
-    inline iterator end(const key_type& key) const {
-        return iterator(__m_creators.upper_bound(key)); 
+    inline iterator end() const {
+        return _Iterator(__m_creators.end());
     }
 
     /*!
@@ -408,27 +402,25 @@ public:
      * \brief Retrieve number of registered creators
      * \return number of registered keys
      */
-    inline size_t size() const { return __m_creators.size(); }
-
+    inline size_t size() const {
+        return __m_creators.size();
+    }
 
     /*!
      * \brief Retrieve number of registered creators for specified key
      * \param key key of registered type
      * \return number of registered creators for specified key
      */
-    inline size_t count(const key_type& key) const { return __m_creators.count(key); }
-
-
-    inline bool empty() const { return __m_creators.empty(); }
+    inline size_t count(const key_type& key) const {
+        return __m_creators.count(key);
+    }
 
     /*!
-     * \brief Retrieve type_info for product type registered under __key
-     * \param __key key of registered type
-     * \return type_info for product type registered under __key
+     * \brief Test if class_factory is empty
+     * \return true if class_factory hasn't got any registered creators, otherwise return false
      */
-    inline const std::type_info* typeinfo(const _Key& key) const {
-        auto it = __m_creators.find(key);
-        return (it != __m_creators.end() ? &(it->second->product_type()) : nullptr);
+    inline bool empty() const {
+        return __m_creators.empty();
     }
 
     /*!
