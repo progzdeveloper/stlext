@@ -56,26 +56,26 @@ _STDX_BEGIN
 template<typename _Tp, typename _Integer, typename _MonoidOp>
 _Tp power(_Tp x, _Integer n, _MonoidOp op)
 {
-	if (n == 0)
-		return typename identity_element<_MonoidOp>::get();
+    if (n == 0)
+        return typename identity_element<_MonoidOp>::get();
 
-	while ((n & 1) == 0)
-	{
-		n >>= 1;
-		x = op(x, x);
-	}
+    while ((n & 1) == 0)
+    {
+        n >>= 1;
+        x = op(x, x);
+    }
 
-	_Tp result = x;
-	n >>= 1;
-	while (n != 0)
-	{
-		x = op(x, x);
-		if ((n & 1) != 0) {
-			result = op(result, x);
-			n >>= 1;
-		}
-	}
-	return result;
+    _Tp result = x;
+    n >>= 1;
+    while (n != 0)
+    {
+        x = op(x, x);
+        if ((n & 1) != 0) {
+            result = op(result, x);
+        }
+        n >>= 1;
+    }
+    return result;
 }
 
 
@@ -93,7 +93,7 @@ _Tp power(_Tp x, _Integer n, _MonoidOp op)
 */
 template<typename _Tp, typename _Integer>
 inline _Tp power(_Tp x, _Integer n) {
-	return power(x, n, std::multiplies<_Tp>());
+    return power(x, n, std::multiplies<_Tp>());
 }
 
 _STDX_END

@@ -229,7 +229,7 @@ public:
 	*/
 	memorized& operator=(function_type&& target) 
 	{	// gently escape self-assignment
-		if (std::addressof(target) == std::addressof(__m_target) { return *this; }
+        if (std::addressof(target) == std::addressof(__m_target)) { return *this; }
 		__m_target = target;
 		__m_cache.clear();
 		return (*this);
@@ -242,7 +242,7 @@ public:
 	*/
 	memorized& operator=(const function_type& target)
 	{	// gently escape self-assignment
-		if (std::addressof(target) == std::addressof(__m_target) { return *this; }
+        if (std::addressof(target) == std::addressof(__m_target)) { return *this; }
 		__m_target = target;
 		__m_cache.clear();
 		return (*this);
@@ -256,7 +256,7 @@ public:
 	template<class _Fx>
 	memorized& operator=(_Fx&& target) 
 	{	// gently escape self-assignment
-		if (std::addressof(target) == std::addressof(__m_target.target<_Fx>()) { 
+        if (std::addressof(target) == std::addressof(__m_target.target<_Fx>())) {
 			return *this; 
 		}
 		__m_target = target;
@@ -274,7 +274,7 @@ public:
 	template<class _Fx, class _Alloc>
 	inline void assign(_Fx&& target, const _Alloc& al) {
 		// gently escape self-assignment
-		if (std::addressof(target) == std::addressof(__m_target.target<_Fx>()) { 
+        if (std::addressof(target) == std::addressof(__m_target.target<_Fx>())) {
 			return; 
 		}
 		__m_target.assign(target, al);
